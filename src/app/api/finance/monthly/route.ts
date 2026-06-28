@@ -26,8 +26,8 @@ export async function GET() {
     `;
 
     const breakdown: Record<FinanceCategory, number> = {
-      food: 0, transport: 0, going_out: 0, health_beauty: 0,
-      shopping: 0, subscriptions: 0, bills: 0, income: 0, other: 0,
+      eating_out: 0, coffees_snacks: 0, transport: 0, going_out: 0, health_beauty: 0,
+      shopping: 0, subscriptions: 0, expenses: 0, groceries: 0, income: 0,
     };
 
     for (const row of rows) {

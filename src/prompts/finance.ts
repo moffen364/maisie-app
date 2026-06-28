@@ -9,19 +9,20 @@ For each transaction return an object with:
 - amount: positive number (expenses and income both positive — use category to distinguish)
 - description: cleaned-up merchant name (human-readable, e.g. "Tesco" not "TESCO STORES 3247")
 - raw_description: the original text exactly as it appeared
-- category: one of: food, transport, going_out, health_beauty, shopping, subscriptions, bills, income, other
+- category: one of: eating_out, coffees_snacks, transport, going_out, health_beauty, shopping, subscriptions, expenses, groceries, income
 - confirmed: true if you're confident about the category, false if uncertain
 
 Category guidelines:
-- food: supermarkets, restaurants, cafes, takeaways, food delivery
-- transport: fuel, trains, buses, taxis, Uber, parking, TfL
-- going_out: bars, pubs, clubs, cinema, events, entertainment
-- health_beauty: pharmacy, gym, haircuts, cosmetics, dental, optician
+- eating_out: restaurants, takeaways, food delivery, fast food
+- coffees_snacks: cafes, coffee shops, bakeries, small snack purchases
+- groceries: supermarkets, fresh produce, grocery delivery (e.g. Woolworths, Coles, Harris Farm)
+- transport: fuel, trains, buses, taxis, Uber, parking, ferry, tolls
+- going_out: bars, pubs, clubs, cinema, events, entertainment, ticketing
+- health_beauty: pharmacy, gym, haircuts, cosmetics, dental, optician, skincare
 - shopping: clothing, electronics, Amazon, general retail
 - subscriptions: Netflix, Spotify, software, recurring services — check the user's fixed expenses list
-- bills: rent, utilities, insurance, council tax, phone bill — check the user's fixed expenses list
+- expenses: rent, utilities, insurance, phone bill, council rates — check the user's fixed expenses list
 - income: salary, transfers in, cashback, refunds
-- other: anything that doesn't fit above
 
 Confidence rules:
 - Set confirmed: true when the merchant clearly maps to one category

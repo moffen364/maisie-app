@@ -1,7 +1,7 @@
 export type Category = 'exercise' | 'food' | 'social' | 'event' | 'task';
 export type NudgeCategory = 'todo' | 'social' | 'health' | 'errand';
 export type PlanSection = 'exercise' | 'meals' | 'todos' | 'social' | 'events';
-export type FinanceCategory = 'food' | 'transport' | 'going_out' | 'health_beauty' | 'shopping' | 'subscriptions' | 'bills' | 'income' | 'other';
+export type FinanceCategory = 'eating_out' | 'coffees_snacks' | 'transport' | 'going_out' | 'health_beauty' | 'shopping' | 'subscriptions' | 'expenses' | 'groceries' | 'income';
 
 export interface UserProfile {
   id: string;
@@ -102,44 +102,47 @@ export interface ParsedTransaction {
 }
 
 export const FINANCE_CATEGORY_COLORS: Record<FinanceCategory, string> = {
-  food: 'bg-amber-100 text-amber-800',
+  eating_out: 'bg-amber-100 text-amber-800',
+  coffees_snacks: 'bg-yellow-100 text-yellow-800',
   transport: 'bg-sky-100 text-sky-800',
   going_out: 'bg-pink-100 text-pink-800',
   health_beauty: 'bg-rose-100 text-rose-800',
   shopping: 'bg-purple-100 text-purple-800',
   subscriptions: 'bg-indigo-100 text-indigo-800',
-  bills: 'bg-orange-100 text-orange-800',
+  expenses: 'bg-orange-100 text-orange-800',
+  groceries: 'bg-teal-100 text-teal-800',
   income: 'bg-green-100 text-green-800',
-  other: 'bg-gray-100 text-gray-800',
 };
 
 export const FINANCE_CATEGORY_DOT: Record<FinanceCategory, string> = {
-  food: 'bg-amber-400',
+  eating_out: 'bg-amber-400',
+  coffees_snacks: 'bg-yellow-500',
   transport: 'bg-sky-500',
   going_out: 'bg-pink-500',
   health_beauty: 'bg-rose-500',
   shopping: 'bg-purple-500',
   subscriptions: 'bg-indigo-500',
-  bills: 'bg-orange-500',
+  expenses: 'bg-orange-500',
+  groceries: 'bg-teal-500',
   income: 'bg-green-500',
-  other: 'bg-gray-400',
 };
 
 export const FINANCE_CATEGORY_LABELS: Record<FinanceCategory, string> = {
-  food: 'Food',
+  eating_out: 'Eating Out',
+  coffees_snacks: 'Coffees & Snacks',
   transport: 'Transport',
   going_out: 'Going Out',
   health_beauty: 'Health & Beauty',
   shopping: 'Shopping',
   subscriptions: 'Subscriptions',
-  bills: 'Bills',
+  expenses: 'Expenses',
+  groceries: 'Groceries',
   income: 'Income',
-  other: 'Other',
 };
 
 export const FINANCE_CATEGORIES: FinanceCategory[] = [
-  'food', 'transport', 'going_out', 'health_beauty',
-  'shopping', 'subscriptions', 'bills', 'income', 'other',
+  'eating_out', 'coffees_snacks', 'transport', 'going_out', 'health_beauty',
+  'shopping', 'subscriptions', 'expenses', 'groceries', 'income',
 ];
 
 export const PLAN_SECTIONS: { key: PlanSection; label: string; prompt: string }[] = [

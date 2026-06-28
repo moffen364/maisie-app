@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   description TEXT NOT NULL,
   raw_description TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN (
-    'food', 'transport', 'going_out', 'health_beauty',
-    'shopping', 'subscriptions', 'bills', 'income', 'other'
+    'eating_out', 'coffees_snacks', 'transport', 'going_out', 'health_beauty',
+    'shopping', 'subscriptions', 'expenses', 'groceries', 'income'
   )),
   confirmed BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

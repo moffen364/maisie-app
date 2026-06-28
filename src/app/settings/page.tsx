@@ -53,7 +53,7 @@ export default function SettingsPage() {
   };
 
   function addExpense() {
-    setFixedExpenses((prev) => [...prev, { name: '', amount: 0, category: 'bills' }]);
+    setFixedExpenses((prev) => [...prev, { name: '', amount: 0, category: 'expenses' }]);
   }
 
   function removeExpense(i: number) {
