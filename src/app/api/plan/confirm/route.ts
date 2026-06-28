@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
           .join('\n\n')
       : '';
 
-    // Update profile with anything new learned
+    // Append anything new learned to the profile — never replace it
     if (inputsSummary) {
       const profileUpdateResponse = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
+        max_tokens: 512,
         messages: [
           {
             role: 'user',
@@ -150,15 +150,18 @@ ${profile || 'No profile yet.'}
 This session's inputs:
 ${inputsSummary}
 
-Return the UPDATED profile text (full content, not just additions). If nothing new was learned, return the profile unchanged.`,
+Return ONLY the new lines to append (not the full profile). If nothing new was learned, return exactly: NONE`,
           },
         ],
       });
 
       const profileContent = profileUpdateResponse.content[0];
       if (profileContent.type === 'text') {
-        const updatedProfile = profileContent.text.trim();
-        if (updatedProfile && updatedProfile !== profile) {
+        const newFacts = profileContent.text.trim();
+        if (newFacts && newFacts !== 'NONE') {
+          const updatedProfile = profile
+            ? `${profile}\n\n${newFacts}`
+            : newFacts;
           await updateUserProfile(updatedProfile);
         }
       }
