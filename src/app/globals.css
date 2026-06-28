@@ -55,9 +55,11 @@ nav, button, label {
   padding-top: env(safe-area-inset-top);
 }
 
-/* Prevent overscroll bounce on iOS but keep scroll within panels */
+/* Prevent overscroll bounce and horizontal scroll on iOS */
 html, body {
   overscroll-behavior: none;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Hide scrollbar but keep functionality */
