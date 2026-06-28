@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { CalendarEntry, Todo, Nudge } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
 import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays } from '@/lib/utils';
@@ -197,17 +197,45 @@ function TodosPanel({
   todos: Todo[];
   onCheck: (id: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const touchStartY = useRef<number | null>(null);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartY.current === null) return;
+    const delta = touchStartY.current - e.changedTouches[0].clientY;
+    if (delta > 30) setExpanded(true);
+    else if (delta < -30) setExpanded(false);
+    touchStartY.current = null;
+  }
+
   return (
     <div className="fixed bottom-0 inset-x-0 z-30 flex justify-center pointer-events-none">
-      <div className="w-full max-w-lg bg-white border-t border-pink-100 shadow-[0_-8px_24px_rgba(219,39,119,0.08)] pointer-events-auto">
-        <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mt-3 mb-2" />
-        <div className="px-4 pb-1 flex items-center justify-between">
-          <p className="text-xs font-semibold text-pink-400 uppercase tracking-widest">To-Dos</p>
-          {todos.length > 0 && (
-            <span className="text-xs text-gray-400">{todos.length} remaining</span>
-          )}
-        </div>
-        <div className="overflow-y-auto px-4 pb-16" style={{ maxHeight: '200px' }}>
+      <div
+        className="w-full max-w-lg bg-white border-t border-pink-100 shadow-[0_-8px_24px_rgba(219,39,119,0.08)] pointer-events-auto"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <button
+          className="w-full"
+          onClick={() => setExpanded((v) => !v)}
+          aria-label={expanded ? 'Collapse to-dos' : 'Expand to-dos'}
+        >
+          <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mt-3 mb-2" />
+          <div className="px-4 pb-1 flex items-center justify-between">
+            <p className="text-xs font-semibold text-pink-400 uppercase tracking-widest">To-Dos</p>
+            {todos.length > 0 && (
+              <span className="text-xs text-gray-400">{todos.length} remaining</span>
+            )}
+          </div>
+        </button>
+        <div
+          className="overflow-y-auto px-4 pb-16 transition-[max-height] duration-300 ease-out"
+          style={{ maxHeight: expanded ? 'calc(60vh - 80px)' : '200px' }}
+        >
           {todos.length === 0 ? (
             <p className="py-4 text-sm text-center text-gray-400">All done for the week</p>
           ) : (

@@ -10,7 +10,16 @@ const TOTAL_STEPS = PLAN_SECTIONS.length + 1; // +1 for finance
 
 export default function PlanPage() {
   const router = useRouter();
-  const weekStart = getMondayOfWeek();
+  // On Sunday, plan for the coming week (next Monday), not the one that just ended
+  const weekStart = (() => {
+    const now = new Date();
+    if (now.getDay() === 0) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      return getMondayOfWeek(tomorrow);
+    }
+    return getMondayOfWeek();
+  })();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [inputs, setInputs] = useState<Record<PlanSection, string>>({
