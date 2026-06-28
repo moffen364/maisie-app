@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS finance_profile (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   monthly_take_home NUMERIC(10,2) NOT NULL DEFAULT 0,
   fixed_expenses JSONB NOT NULL DEFAULT '[]',
+  category_budgets JSONB NOT NULL DEFAULT '{}',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

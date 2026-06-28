@@ -140,6 +140,8 @@ export const FINANCE_CATEGORY_LABELS: Record<FinanceCategory, string> = {
   income: 'Income',
 };
 
+export type CategoryBudgets = Partial<Record<FinanceCategory, number>>;
+
 export const FINANCE_CATEGORIES: FinanceCategory[] = [
   'eating_out', 'coffees_snacks', 'transport', 'going_out', 'health_beauty',
   'shopping', 'subscriptions', 'expenses', 'groceries', 'income',

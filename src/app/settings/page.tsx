@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FixedExpense, FinanceCategory, FINANCE_CATEGORY_LABELS, FINANCE_CATEGORIES } from '@/lib/types';
+import { FixedExpense, FinanceCategory, CategoryBudgets, FINANCE_CATEGORY_LABELS, FINANCE_CATEGORIES } from '@/lib/types';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function SettingsPage() {
   // Finance state
   const [monthlyTakeHome, setMonthlyTakeHome] = useState('');
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
+  const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudgets>({});
   const [financeSaving, setFinanceSaving] = useState(false);
   const [financeLoading, setFinanceLoading] = useState(true);
 
@@ -28,9 +29,10 @@ export default function SettingsPage() {
 
     fetch('/api/finance/profile')
       .then((res) => res.json())
-      .then((data: { monthly_take_home: number; fixed_expenses: FixedExpense[] }) => {
+      .then((data: { monthly_take_home: number; fixed_expenses: FixedExpense[]; category_budgets: CategoryBudgets }) => {
         setMonthlyTakeHome(String(data.monthly_take_home ?? ''));
         setFixedExpenses(data.fixed_expenses ?? []);
+        setCategoryBudgets(data.category_budgets ?? {});
       })
       .catch(() => {})
       .finally(() => setFinanceLoading(false));
@@ -77,6 +79,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           monthly_take_home: parseFloat(monthlyTakeHome) || 0,
           fixed_expenses: fixedExpenses.filter((e) => e.name.trim()),
+          category_budgets: categoryBudgets,
         }),
       });
     } catch {}
@@ -230,6 +233,42 @@ export default function SettingsPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Category budgets */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Monthly category budgets (optional)</label>
+              <p className="text-xs text-gray-400 mb-3">Leave blank for categories you don&apos;t want to track.</p>
+              <div className="space-y-2">
+                {FINANCE_CATEGORIES.filter((c) => c !== 'income').map((cat) => (
+                  <div key={cat} className="flex items-center gap-2">
+                    <span className="flex-1 text-sm text-gray-700">{FINANCE_CATEGORY_LABELS[cat]}</span>
+                    <div className="relative w-28 flex-shrink-0">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={categoryBudgets[cat] ?? ''}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setCategoryBudgets((prev) => {
+                            const next = { ...prev };
+                            if (isNaN(val) || e.target.value === '') {
+                              delete next[cat];
+                            } else {
+                              next[cat] = val;
+                            }
+                            return next;
+                          });
+                        }}
+                        placeholder="No limit"
+                        className="w-full border border-pink-200 rounded-lg pl-6 pr-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <button

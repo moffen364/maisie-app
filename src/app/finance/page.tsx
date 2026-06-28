@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   FinanceCategory,
+  CategoryBudgets,
   Transaction,
   FINANCE_CATEGORY_DOT,
   FINANCE_CATEGORY_LABELS,
@@ -19,6 +20,7 @@ interface SummaryData {
 interface MonthlyData {
   breakdown: Record<FinanceCategory, number>;
   monthlyBudget: number;
+  categoryBudgets: CategoryBudgets;
 }
 
 function formatAUD(amount: number) {
@@ -182,9 +184,11 @@ export default function FinancePage() {
                     .sort((a, b) => monthly.breakdown[b] - monthly.breakdown[a])
                     .map((cat) => {
                       const amount = monthly.breakdown[cat];
-                      const barPct = monthly.monthlyBudget > 0
-                        ? Math.min((amount / monthly.monthlyBudget) * 100, 100)
+                      const budget = monthly.categoryBudgets?.[cat];
+                      const barPct = budget
+                        ? Math.min((amount / budget) * 100, 100)
                         : monthlyTotal > 0 ? (amount / monthlyTotal) * 100 : 0;
+                      const overBudget = budget && amount > budget;
                       return (
                         <div key={cat}>
                           <div className="flex items-center justify-between mb-1">
@@ -192,11 +196,19 @@ export default function FinancePage() {
                               <span className={`w-2 h-2 rounded-full ${FINANCE_CATEGORY_DOT[cat]}`} />
                               <span className="text-sm text-gray-700">{FINANCE_CATEGORY_LABELS[cat]}</span>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">{formatAUD(amount)}</span>
+                            <div className="text-right">
+                              {budget ? (
+                                <span className={`text-sm font-medium ${overBudget ? 'text-red-500' : 'text-gray-900'}`}>
+                                  {formatAUD(amount)} <span className="text-gray-400 font-normal">of {formatAUD(budget)}</span>
+                                </span>
+                              ) : (
+                                <span className="text-sm font-medium text-gray-900">{formatAUD(amount)}</span>
+                              )}
+                            </div>
                           </div>
                           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full ${FINANCE_CATEGORY_DOT[cat]}`}
+                              className={`h-full rounded-full ${overBudget ? 'bg-red-400' : FINANCE_CATEGORY_DOT[cat]}`}
                               style={{ width: `${barPct}%` }}
                             />
                           </div>

@@ -1,20 +1,30 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
-import { FinanceCategory } from '@/lib/types';
+import { FinanceCategory, CategoryBudgets } from '@/lib/types';
 
 export async function GET() {
   try {
     const now = new Date();
-    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const day = now.getDate();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+    // Pay cycle runs 15th → 14th. If today is before the 15th, period started last month.
+    const periodStartDate = day >= 15
+      ? new Date(year, month, 15)
+      : new Date(month === 0 ? year - 1 : year, month === 0 ? 11 : month - 1, 15);
+    const monthStart = periodStartDate.toISOString().split('T')[0];
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const monthEnd = tomorrow.toISOString().split('T')[0];
 
-    const profileRows = await sql`SELECT monthly_take_home, fixed_expenses FROM finance_profile LIMIT 1`;
-    const profile = profileRows[0] ?? { monthly_take_home: 0, fixed_expenses: [] };
+    const profileRows = await sql`SELECT monthly_take_home, fixed_expenses, category_budgets FROM finance_profile LIMIT 1`;
+    const profile = profileRows[0] ?? { monthly_take_home: 0, fixed_expenses: [], category_budgets: {} };
     const fixedExpenses = Array.isArray(profile.fixed_expenses) ? profile.fixed_expenses : [];
     const fixedTotal = fixedExpenses.reduce((sum: number, e: { amount: number }) => sum + Number(e.amount), 0);
     const monthlyBudget = Number(profile.monthly_take_home) - fixedTotal;
+    const categoryBudgets: CategoryBudgets = (profile.category_budgets && typeof profile.category_budgets === 'object')
+      ? profile.category_budgets as CategoryBudgets
+      : {};
 
     const rows = await sql`
       SELECT category, SUM(amount)::numeric as total
@@ -34,7 +44,7 @@ export async function GET() {
       breakdown[row.category as FinanceCategory] = Math.round(Number(row.total) * 100) / 100;
     }
 
-    return NextResponse.json({ breakdown, monthlyBudget: Math.round(monthlyBudget * 100) / 100 });
+    return NextResponse.json({ breakdown, monthlyBudget: Math.round(monthlyBudget * 100) / 100, categoryBudgets });
   } catch (error) {
     console.error('[GET /api/finance/monthly]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

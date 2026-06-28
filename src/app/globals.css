@@ -56,7 +56,10 @@ nav, button, label {
 }
 
 /* Prevent overscroll bounce and horizontal scroll on iOS */
-html, body {
+html {
+  overscroll-behavior: none;
+}
+body {
   overscroll-behavior: none;
   overflow-x: hidden;
   width: 100%;
