@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  /* Baby pink brand palette */
+  --color-brand-faint: oklch(0.977 0.010 355);  /* barely-pink page wash */
+  --color-brand-light: oklch(0.942 0.045 355);  /* soft pink bg for hovers/tags */
+  --color-brand:       oklch(0.660 0.207 355);  /* primary interactive (≈ pink-500) */
+  --color-brand-dark:  oklch(0.560 0.210 355);  /* hover/pressed (≈ pink-700) */
+}
+
+:root {
+  --background: oklch(0.977 0.010 355);
+  --foreground: oklch(0.19 0.01 355);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe area insets for iPhone notch / home indicator */
+.safe-area-pb {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Prevent overscroll bounce on iOS but keep scroll within panels */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Respect reduced motion for all transitions and animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

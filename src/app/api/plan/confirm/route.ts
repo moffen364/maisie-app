@@ -1,0 +1,172 @@
+import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import sql, { getOrCreateWeek, getUserProfile, updateUserProfile } from '@/lib/db';
+
+const client = new Anthropic();
+
+interface CalendarEntryInput {
+  day: string;
+  time: string | null;
+  category: string;
+  title: string;
+  notes: string | null;
+}
+
+interface TodoInput {
+  title: string;
+  due_day: string | null;
+}
+
+interface ReviewResult {
+  calendarEntries: CalendarEntryInput[];
+  todos: TodoInput[];
+}
+
+async function generateWeekPlan(
+  weekStart: string,
+  weekId: string,
+  profile: string
+): Promise<ReviewResult> {
+  const sectionInputs = await sql`
+    SELECT section, raw_input
+    FROM section_inputs
+    WHERE week_id = ${weekId}
+    ORDER BY section
+  `;
+
+  const inputsSummary = sectionInputs.length > 0
+    ? sectionInputs
+        .map((s) => `## ${s.section}\n${s.raw_input}`)
+        .join('\n\n')
+    : 'No planning inputs yet.';
+
+  const systemPrompt = `You are a personal planning assistant for Maisie. Review her week plan and provide structured feedback.
+
+User profile:
+${profile || 'No profile yet.'}
+
+Return a JSON object with:
+- positives: string[] (2-4 specific things that look good)
+- issues: string[] (specific problems, gaps, or overloads — be direct, e.g. "No meals planned Thursday or Friday", "Thursday looks overloaded")
+- proposedWeek: array of { day: "Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"|"Sunday", items: string[] } for all 7 days
+- calendarEntries: array of { day: YYYY-MM-DD, time: string|null, category: "exercise"|"food"|"social"|"event"|"task", title: string, notes: string|null } — the actual entries to create. IMPORTANT: for the meals section, do NOT create individual breakfast/lunch/dinner events. Instead create ONE grocery reminder on the Sunday or Monday of the week (whichever is the planning night) with category "task", title "Grocery shop", and the weekly meal plan summarised in notes.
+- todos: array of { title: string, due_day: YYYY-MM-DD|null } — tasks and errands
+
+The week starts on ${weekStart}.
+Respond with ONLY valid JSON.`;
+
+  const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const rawContent = response.content[0];
+  if (rawContent.type !== 'text') {
+    throw new Error('Unexpected response from Claude');
+  }
+
+  const cleaned = rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  return JSON.parse(cleaned) as ReviewResult;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { weekStart } = body;
+
+    if (!weekStart) {
+      return NextResponse.json({ error: 'weekStart is required' }, { status: 400 });
+    }
+
+    const week = await getOrCreateWeek(weekStart);
+    const profile = await getUserProfile();
+
+    // Generate the structured plan via Claude
+    const planData = await generateWeekPlan(weekStart, week.id, profile);
+
+    const { calendarEntries = [], todos = [] } = planData;
+
+    // Clean slate: delete existing entries for this week
+    await sql`DELETE FROM calendar_entries WHERE week_id = ${week.id}`;
+    await sql`DELETE FROM todos WHERE week_id = ${week.id}`;
+
+    // Insert calendar entries
+    for (const entry of calendarEntries) {
+      await sql`
+        INSERT INTO calendar_entries (week_id, day, time, category, title, notes, completed)
+        VALUES (
+          ${week.id},
+          ${entry.day}::date,
+          ${entry.time ?? null},
+          ${entry.category},
+          ${entry.title},
+          ${entry.notes ?? null},
+          false
+        )
+      `;
+    }
+
+    // Insert todos
+    for (const todo of todos) {
+      await sql`
+        INSERT INTO todos (week_id, title, due_day, completed)
+        VALUES (
+          ${week.id},
+          ${todo.title},
+          ${todo.due_day ?? null},
+          false
+        )
+      `;
+    }
+
+    // Fetch all section inputs for profile update
+    const sectionInputs = await sql`
+      SELECT section, raw_input FROM section_inputs WHERE week_id = ${week.id}
+    `;
+
+    const inputsSummary = sectionInputs.length > 0
+      ? sectionInputs
+          .map((s) => `## ${s.section}\n${s.raw_input}`)
+          .join('\n\n')
+      : '';
+
+    // Update profile with anything new learned
+    if (inputsSummary) {
+      const profileUpdateResponse = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: `Given this planning session, identify any NEW preferences, habits, or facts about Maisie that should be added to her profile. Only add things that aren't already captured. Be specific and brief.
+
+Current profile:
+${profile || 'No profile yet.'}
+
+This session's inputs:
+${inputsSummary}
+
+Return the UPDATED profile text (full content, not just additions). If nothing new was learned, return the profile unchanged.`,
+          },
+        ],
+      });
+
+      const profileContent = profileUpdateResponse.content[0];
+      if (profileContent.type === 'text') {
+        const updatedProfile = profileContent.text.trim();
+        if (updatedProfile && updatedProfile !== profile) {
+          await updateUserProfile(updatedProfile);
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[POST /api/plan/confirm]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

@@ -1,0 +1,120 @@
+<h2>Today Screen</h2>
+<p class="subtitle">Two options for how your day is laid out. This is what you open to every time during the week.</p>
+
+<div class="split">
+
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">A — Timeline first</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <div style="font-size:10px;color:#888;letter-spacing:1px">MONDAY · 23 JUN</div>
+      <div style="font-size:20px;font-weight:700;margin:2px 0 12px">Good morning, Maisie</div>
+
+      <!-- Nudge banner -->
+      <div style="background:#2a1f3d;border-left:3px solid #c084fc;border-radius:6px;padding:8px 10px;margin-bottom:14px;font-size:11px;color:#d8b4fe">
+        💬 No movement logged yet — it's 9am
+      </div>
+
+      <!-- Timeline -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">TODAY</div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+        <div style="color:#888;font-size:10px;width:30px;flex-shrink:0">7am</div>
+        <div style="background:#1e3a2f;border-radius:6px;padding:6px 10px;flex:1;color:#6ee7b7;font-size:11px">🏃 Morning run · 30 min</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+        <div style="color:#888;font-size:10px;width:30px;flex-shrink:0">12pm</div>
+        <div style="background:#222;border-radius:6px;padding:6px 10px;flex:1;font-size:11px">🥗 Salmon + greens</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+        <div style="color:#888;font-size:10px;width:30px;flex-shrink:0">7pm</div>
+        <div style="background:#1a2a3a;border-radius:6px;padding:6px 10px;flex:1;color:#93c5fd;font-size:11px">🍷 Drinks with Sarah</div>
+      </div>
+
+      <!-- To-dos -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin:14px 0 6px">THIS WEEK'S TO-DOS</div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Buy olive oil</span>
+        <span style="margin-left:auto;font-size:10px;color:#888">today</span>
+      </div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Call dentist</span>
+        <span style="margin-left:auto;font-size:10px;color:#888">Tue</span>
+      </div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Text Mia</span>
+        <span style="margin-left:auto;font-size:10px;color:#888">this week</span>
+      </div>
+
+      <!-- Bottom nav -->
+      <div style="display:flex;justify-content:space-around;margin-top:16px;padding-top:10px;border-top:1px solid #222">
+        <div style="text-align:center;color:#c084fc;font-size:9px"><div style="font-size:16px">📅</div>Today</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">🗓</div>Week</div>
+        <div style="background:#c084fc;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#000;font-size:18px;margin-top:-4px">+</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">✏️</div>Plan</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">🔔</div>Nudges</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">B — To-dos first</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <div style="font-size:10px;color:#888;letter-spacing:1px">MONDAY · 23 JUN</div>
+      <div style="font-size:20px;font-weight:700;margin:2px 0 12px">Good morning, Maisie</div>
+
+      <!-- Nudge banner -->
+      <div style="background:#2a1f3d;border-left:3px solid #c084fc;border-radius:6px;padding:8px 10px;margin-bottom:14px;font-size:11px;color:#d8b4fe">
+        💬 No movement logged yet — it's 9am
+      </div>
+
+      <!-- To-dos first -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">DO TODAY</div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Buy olive oil</span>
+      </div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">🏃 Morning run · 30 min</span>
+      </div>
+
+      <!-- Upcoming today -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">COMING UP TODAY</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
+        <div style="color:#888;font-size:10px;width:30px;flex-shrink:0">12pm</div>
+        <div style="background:#222;border-radius:6px;padding:6px 10px;flex:1;font-size:11px">🥗 Salmon + greens</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <div style="color:#888;font-size:10px;width:30px;flex-shrink:0">7pm</div>
+        <div style="background:#1a2a3a;border-radius:6px;padding:6px 10px;flex:1;color:#93c5fd;font-size:11px">🍷 Drinks with Sarah</div>
+      </div>
+
+      <!-- This week -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">STILL THIS WEEK</div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Call dentist</span>
+        <span style="margin-left:auto;font-size:10px;color:#888">Tue</span>
+      </div>
+      <div style="background:#222;border-radius:6px;padding:7px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border:1.5px solid #555;border-radius:3px;flex-shrink:0"></div>
+        <span style="font-size:11px">Text Mia</span>
+        <span style="margin-left:auto;font-size:10px;color:#888">this week</span>
+      </div>
+
+      <!-- Bottom nav -->
+      <div style="display:flex;justify-content:space-around;margin-top:16px;padding-top:10px;border-top:1px solid #222">
+        <div style="text-align:center;color:#c084fc;font-size:9px"><div style="font-size:16px">📅</div>Today</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">🗓</div>Week</div>
+        <div style="background:#c084fc;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#000;font-size:18px;margin-top:-4px">+</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">✏️</div>Plan</div>
+        <div style="text-align:center;color:#555;font-size:9px"><div style="font-size:16px">🔔</div>Nudges</div>
+      </div>
+    </div>
+  </div>
+
+</div>

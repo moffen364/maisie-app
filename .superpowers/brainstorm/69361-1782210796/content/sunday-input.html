@@ -1,0 +1,96 @@
+<h2>Sunday Planning Input</h2>
+<p class="subtitle">How the weekly brain dump form feels. Same sections either way — just different layout.</p>
+
+<div class="split">
+
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">A — One long scroll</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px;max-height:520px;overflow-y:auto">
+
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Plan your week</div>
+      <div style="font-size:11px;color:#888;margin-bottom:16px">Dump everything in. AI will sort it out.</div>
+
+      <!-- Exercise -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#6ee7b7;letter-spacing:1px;margin-bottom:5px">🏃 EXERCISE</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:56px;box-sizing:border-box" placeholder="e.g. run Monday morning, yoga Wednesday, gym Thursday"></textarea>
+      </div>
+
+      <!-- Meals -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#fbbf24;letter-spacing:1px;margin-bottom:5px">🥗 MEALS</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:56px;box-sizing:border-box" placeholder="e.g. meal prep Sunday, salmon Mon/Wed, eating out Friday"></textarea>
+      </div>
+
+      <!-- To-dos -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#93c5fd;letter-spacing:1px;margin-bottom:5px">📋 TO-DOS & ERRANDS</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:56px;box-sizing:border-box" placeholder="e.g. buy olive oil, call dentist, sort out car insurance"></textarea>
+      </div>
+
+      <!-- Social -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#f9a8d4;letter-spacing:1px;margin-bottom:5px">🤝 SOCIAL</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:56px;box-sizing:border-box" placeholder="e.g. want to see Sarah this week, group dinner Thursday"></textarea>
+      </div>
+
+      <!-- Events -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;color:#a78bfa;letter-spacing:1px;margin-bottom:5px">📌 EVENTS & COMMITMENTS</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:56px;box-sizing:border-box" placeholder="e.g. dentist Tuesday 2pm, team lunch Wednesday"></textarea>
+      </div>
+
+      <!-- Anything else -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:5px">💭 ANYTHING ELSE</div>
+        <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:11px;resize:none;height:48px;box-sizing:border-box" placeholder="free text — random thoughts, context for the AI"></textarea>
+      </div>
+
+      <div style="background:#c084fc;border-radius:10px;padding:12px;text-align:center;color:#000;font-weight:700;font-size:13px">
+        Analyse my week →
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">B — Step through sections</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Plan your week</div>
+      <div style="font-size:11px;color:#888;margin-bottom:16px">Step 2 of 5</div>
+
+      <!-- Progress bar -->
+      <div style="background:#222;border-radius:4px;height:4px;margin-bottom:20px">
+        <div style="background:#c084fc;border-radius:4px;height:4px;width:40%"></div>
+      </div>
+
+      <!-- Current section -->
+      <div style="font-size:10px;color:#fbbf24;letter-spacing:1px;margin-bottom:8px">🥗 MEALS</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">What are you eating this week?</div>
+      <div style="font-size:11px;color:#888;margin-bottom:12px">Meals, meal prep, eating out — anything you've planned</div>
+      <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-size:12px;resize:none;height:100px;box-sizing:border-box" placeholder="e.g. meal prep Sunday, salmon Mon/Wed, eating out Friday night..."></textarea>
+
+      <!-- Upcoming sections preview -->
+      <div style="margin-top:16px;margin-bottom:20px">
+        <div style="font-size:10px;color:#555;letter-spacing:1px;margin-bottom:8px">COMING UP</div>
+        <div style="display:flex;gap:6px">
+          <div style="background:#222;border-radius:6px;padding:5px 10px;font-size:10px;color:#555">📋 To-dos</div>
+          <div style="background:#222;border-radius:6px;padding:5px 10px;font-size:10px;color:#555">🤝 Social</div>
+          <div style="background:#222;border-radius:6px;padding:5px 10px;font-size:10px;color:#555">📌 Events</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <div style="background:#222;border-radius:10px;padding:12px;text-align:center;color:#888;font-size:12px;flex:1">
+          ← Back
+        </div>
+        <div style="background:#c084fc;border-radius:10px;padding:12px;text-align:center;color:#000;font-weight:700;font-size:12px;flex:2">
+          Next: To-dos →
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:10px;font-size:10px;color:#555">Skip this section</div>
+    </div>
+  </div>
+
+</div>

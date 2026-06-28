@@ -1,0 +1,108 @@
+<h2>Section Chat — Sunday Planning</h2>
+<p class="subtitle">Each section is a mini Claude conversation with its own instruction set. Two options for how that chat feels.</p>
+
+<div class="split">
+
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">A — Chat bubble style</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:10px;color:#6ee7b7;letter-spacing:1px">🏃 EXERCISE · Step 1 of 5</div>
+        <div style="font-size:10px;color:#555">skip</div>
+      </div>
+      <div style="background:#222;border-radius:4px;height:3px;margin-bottom:14px">
+        <div style="background:#6ee7b7;border-radius:4px;height:3px;width:20%"></div>
+      </div>
+
+      <!-- Chat messages -->
+      <div style="margin-bottom:10px">
+        <!-- Claude message -->
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+          <div style="background:#333;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">AI</div>
+          <div style="background:#1e1e2e;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:11px;color:#e2e8f0;max-width:85%">
+            Hey — let's sort your exercise for this week. What are you planning? Days, type, anything already locked in?
+          </div>
+        </div>
+        <!-- User message -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <div style="background:#2d1f4e;border-radius:8px 0 8px 8px;padding:8px 10px;font-size:11px;color:#e2e8f0;max-width:85%">
+            run Tuesday morning, want to do a long walk somewhere on the weekend, maybe gym Thursday but not sure
+          </div>
+        </div>
+        <!-- Claude follow-up -->
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+          <div style="background:#333;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">AI</div>
+          <div style="background:#1e1e2e;border-radius:0 8px 8px 8px;padding:8px 10px;font-size:11px;color:#e2e8f0;max-width:85%">
+            Got it. What time Tuesday — morning like last week? And for the walk, are you thinking solo or with someone?
+          </div>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:8px 10px;flex:1;font-size:11px;color:#555">
+          7am yeah, walk with Sarah maybe...
+        </div>
+        <div style="background:#6ee7b7;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#000;font-size:16px">↑</div>
+      </div>
+
+      <!-- Done button -->
+      <div style="margin-top:12px;border-top:1px solid #222;padding-top:12px;text-align:center">
+        <div style="font-size:11px;color:#555;margin-bottom:8px">Happy with your exercise plan?</div>
+        <div style="background:#c084fc;border-radius:8px;padding:9px;text-align:center;color:#000;font-weight:700;font-size:12px">
+          Lock in & next section →
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">B — Claude leads with questions</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:10px;color:#6ee7b7;letter-spacing:1px">🏃 EXERCISE · Step 1 of 5</div>
+        <div style="font-size:10px;color:#555">skip</div>
+      </div>
+      <div style="background:#222;border-radius:4px;height:3px;margin-bottom:14px">
+        <div style="background:#6ee7b7;border-radius:4px;height:3px;width:20%"></div>
+      </div>
+
+      <!-- Claude's opening prompt -->
+      <div style="background:#1e1e2e;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#e2e8f0;line-height:1.5">
+        What exercise do you have planned this week? Include days, type, and duration if you know them.
+      </div>
+
+      <!-- Free text dump -->
+      <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-size:12px;resize:none;height:70px;box-sizing:border-box;margin-bottom:10px" placeholder="run Tuesday morning, gym Thursday maybe..."></textarea>
+
+      <div style="background:#6ee7b7;border-radius:8px;padding:9px;text-align:center;color:#000;font-weight:700;font-size:12px;margin-bottom:12px">
+        Send →
+      </div>
+
+      <!-- Claude's follow-up (after first send) -->
+      <div style="background:#1e1e2e;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#e2e8f0;line-height:1.5;border-left:3px solid #6ee7b7">
+        Got it. What time on Tuesday for the run?
+      </div>
+
+      <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-size:12px;resize:none;height:44px;box-sizing:border-box;margin-bottom:10px" placeholder="7am"></textarea>
+
+      <!-- Done -->
+      <div style="border-top:1px solid #222;padding-top:12px;text-align:center">
+        <div style="background:#c084fc;border-radius:8px;padding:9px;text-align:center;color:#000;font-weight:700;font-size:12px">
+          Done with exercise → Next section
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;background:#1a1a1a;border-radius:8px;padding:14px;font-size:12px">
+  <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:8px">HOW THE PROMPTS WORK</div>
+  <p style="color:#aaa;margin:0 0 6px">Each section loads its own file — e.g. <code style="background:#222;padding:2px 5px;border-radius:4px;color:#c084fc">prompts/exercise.md</code>. You edit that file to tune how Claude behaves for that section. The app reads it fresh each Sunday, so changes take effect immediately.</p>
+  <p style="color:#555;margin:0;font-size:11px">Example prompt files: exercise.md · meals.md · todos.md · social.md · events.md</p>
+</div>

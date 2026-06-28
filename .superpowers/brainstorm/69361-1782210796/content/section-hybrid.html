@@ -1,0 +1,98 @@
+<h2>Section Input — Hybrid Mode</h2>
+<p class="subtitle">Free-text by default. Tap "Ask Claude" when you want help thinking it through.</p>
+
+<div class="split">
+
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">Default — just dumping</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:10px;color:#fbbf24;letter-spacing:1px">🥗 MEALS · Step 2 of 5</div>
+        <div style="font-size:10px;color:#555">skip</div>
+      </div>
+      <div style="background:#222;border-radius:4px;height:3px;margin-bottom:14px">
+        <div style="background:#fbbf24;border-radius:4px;height:3px;width:40%"></div>
+      </div>
+
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">What are you eating this week?</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Meals, prep, eating out — whatever you've got in mind.</div>
+
+      <textarea style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-size:12px;resize:none;height:90px;box-sizing:border-box;line-height:1.5" placeholder="salmon monday, meal prep sunday, eating out friday...">salmon monday, not sure about the rest, maybe want to do something with pasta</textarea>
+
+      <!-- Ask Claude button -->
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <div style="background:#1a1a1a;border:1px solid #fbbf24;border-radius:8px;padding:8px 12px;font-size:11px;color:#fbbf24;display:flex;align-items:center;gap:6px;cursor:pointer">
+          ✨ Ask Claude for ideas
+        </div>
+        <div style="font-size:10px;color:#555">or just keep typing</div>
+      </div>
+
+      <div style="margin-top:16px;border-top:1px solid #222;padding-top:12px">
+        <div style="background:#c084fc;border-radius:8px;padding:10px;text-align:center;color:#000;font-weight:700;font-size:12px">
+          Next: To-dos →
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="mockup-header">After tapping "Ask Claude"</div>
+    <div class="mockup-body" style="background:#0f0f0f;border-radius:8px;padding:14px;font-family:sans-serif;color:#fff;font-size:12px">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:10px;color:#fbbf24;letter-spacing:1px">🥗 MEALS · Step 2 of 5</div>
+        <div style="font-size:10px;color:#555">skip</div>
+      </div>
+      <div style="background:#222;border-radius:4px;height:3px;margin-bottom:14px">
+        <div style="background:#fbbf24;border-radius:4px;height:3px;width:40%"></div>
+      </div>
+
+      <!-- What she typed -->
+      <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:#aaa">
+        salmon monday, not sure about the rest, maybe want to do something with pasta
+      </div>
+
+      <!-- Claude panel slides up -->
+      <div style="background:#1c1624;border:1px solid #3d2f5e;border-radius:10px;padding:12px">
+        <div style="font-size:10px;color:#c084fc;letter-spacing:1px;margin-bottom:8px">✨ CLAUDE · Meal ideas for you</div>
+
+        <div style="font-size:11px;color:#e2e8f0;line-height:1.6;margin-bottom:10px">
+          Based on what you like — here are some options to fill out the week:<br><br>
+          <b style="color:#fbbf24">Mon</b> — Salmon with roasted veg (quick, you do this well)<br>
+          <b style="color:#fbbf24">Tue</b> — Pasta with pesto + chicken (you mentioned pasta)<br>
+          <b style="color:#fbbf24">Wed</b> — Leftovers / big salad<br>
+          <b style="color:#fbbf24">Thu</b> — Stir fry (fast, gym night)<br>
+          <b style="color:#fbbf24">Fri</b> — Eating out, so skip<br>
+        </div>
+
+        <!-- Tap to add suggestion -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          <div style="background:#2a1f3d;border:1px solid #c084fc;border-radius:20px;padding:4px 10px;font-size:10px;color:#c084fc">+ Add all suggestions</div>
+          <div style="background:#222;border-radius:20px;padding:4px 10px;font-size:10px;color:#888">+ Just Mon–Tue</div>
+        </div>
+
+        <!-- Follow-up chat -->
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:7px 10px;flex:1;font-size:11px;color:#555">Ask a follow-up...</div>
+          <div style="background:#fbbf24;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px;flex-shrink:0">↑</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="background:#c084fc;border-radius:8px;padding:10px;text-align:center;color:#000;font-weight:700;font-size:12px">
+          Next: To-dos →
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;background:#1a1a1a;border-radius:8px;padding:14px;font-size:12px">
+  <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:8px">HOW CLAUDE KNOWS YOUR PREFERENCES</div>
+  <p style="color:#aaa;margin:0 0 6px;line-height:1.5">
+    A persistent <code style="background:#222;padding:2px 5px;border-radius:4px;color:#c084fc">profile.md</code> file stores what you like — favourite foods, exercise habits, friends, usual weekly patterns. Claude reads this every time you open a section. You can edit it directly, or Claude updates it over time as it learns more about you.
+  </p>
+  <p style="color:#555;margin:0;font-size:11px">profile.md · prompts/meals.md · prompts/exercise.md · prompts/social.md ...</p>
+</div>
