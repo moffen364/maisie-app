@@ -3,8 +3,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { CalendarEntry, Nudge } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
-import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays } from '@/lib/utils';
+import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays, sortByTime } from '@/lib/utils';
+import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
+import CheckCircleButton from '@/components/CheckCircleButton';
 import Link from 'next/link';
 
 function SkeletonCard() {
@@ -33,22 +35,10 @@ function EntryPill({
       className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5 cursor-pointer active:bg-brand-faint"
       onClick={() => onOpen(entry)}
     >
-      <button
+      <CheckCircleButton
+        checked={entry.completed}
         onClick={(e) => { e.stopPropagation(); onCheck(entry.id, !entry.completed); }}
-        className="shrink-0 w-11 h-11 flex items-center justify-center -ml-2"
-        aria-label={entry.completed ? 'Mark incomplete' : 'Mark complete'}
-      >
-        {entry.completed ? (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" fill="#22c55e" />
-            <path d="M5.5 10.5l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" stroke="#d1d5db" strokeWidth="1.5" />
-          </svg>
-        )}
-      </button>
+      />
       <span className={`shrink-0 w-2 h-2 rounded-full ${CATEGORY_DOT[entry.category]}`} />
       <span className={`flex-1 text-sm truncate ${entry.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
         {entry.title}
@@ -75,12 +65,7 @@ function TodayCard({
     weekday: 'long', day: 'numeric', month: 'long',
   });
 
-  const sorted = [...entries].sort((a, b) => {
-    if (!a.time && !b.time) return 0;
-    if (!a.time) return 1;
-    if (!b.time) return -1;
-    return a.time.localeCompare(b.time);
-  });
+  const sorted = sortByTime(entries);
 
   return (
     <div className="mx-4 mb-5 rounded-2xl overflow-hidden shadow-sm border border-pink-200">
@@ -114,13 +99,7 @@ function FutureDay({
 }) {
   if (entries.length === 0) return null;
 
-  const sorted = [...entries].sort((a, b) => {
-    if (!a.time && !b.time) return 0;
-    if (!a.time) return 1;
-    if (!b.time) return -1;
-    return a.time.localeCompare(b.time);
-  });
-
+  const sorted = sortByTime(entries);
   const date = new Date(day + 'T00:00:00');
   const weekdayLabel = date.toLocaleDateString('en-GB', { weekday: 'short' });
   const dateLabel = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -176,16 +155,10 @@ function PastDaysDropdown({
           {days.map((day) => {
             const dayEntries = entriesByDay[day] ?? [];
             if (dayEntries.length === 0) return null;
-            const sorted = [...dayEntries].sort((a, b) => {
-              if (!a.time && !b.time) return 0;
-              if (!a.time) return 1;
-              if (!b.time) return -1;
-              return a.time.localeCompare(b.time);
-            });
             return (
               <div key={day}>
                 <p className="text-sm font-medium text-gray-400 mb-2">{formatShortDay(day)}</p>
-                {sorted.map((entry) => (
+                {sortByTime(dayEntries).map((entry) => (
                   <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
                 ))}
               </div>
@@ -202,7 +175,7 @@ export default function WeekPage() {
   const today = getTodayStr();
   const days = getWeekDays(weekStart);
 
-  const [entries, setEntries] = useState<CalendarEntry[]>([]);
+  const { entries, setEntries, entriesByDay, updateEntry, deleteEntry, checkEntry } = useCalendarEntries();
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -243,41 +216,25 @@ export default function WeekPage() {
   }
 
   const handleToggleEntry = useCallback((id: string, done: boolean) => {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, completed: done } : e)));
-    setSelectedEntry((prev) => prev && prev.id === id ? { ...prev, completed: done } : prev);
-  }, []);
+    updateEntry(id, { completed: done });
+    setSelectedEntry((prev) => prev?.id === id ? { ...prev, completed: done } : prev);
+  }, [updateEntry]);
 
   async function handleCheckEntry(id: string, done: boolean) {
-    handleToggleEntry(id, done);
-    try {
-      const res = await fetch('/api/calendar', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, completed: done }),
-      });
-      if (!res.ok) throw new Error();
-    } catch {
-      handleToggleEntry(id, !done);
-    }
+    await checkEntry(id, done, handleToggleEntry);
   }
 
   function handleDeleteEntry(id: string) {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    deleteEntry(id);
   }
 
   function handleNotesChange(id: string, notes: string | null) {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, notes } : e)));
-    setSelectedEntry((prev) => prev && prev.id === id ? { ...prev, notes } : prev);
+    updateEntry(id, { notes });
+    setSelectedEntry((prev) => prev?.id === id ? { ...prev, notes } : prev);
   }
 
   const activeNudge = nudges.filter((n) => !n.dismissed)
     .sort((a, b) => b.triggered_at.localeCompare(a.triggered_at))[0] ?? null;
-
-  const entriesByDay = entries.reduce<Record<string, CalendarEntry[]>>((acc, e) => {
-    if (!acc[e.day]) acc[e.day] = [];
-    acc[e.day].push(e);
-    return acc;
-  }, {});
 
   const pastDays = days.filter((d) => d < today);
   const futureDays = days.filter((d) => d > today);
@@ -330,7 +287,6 @@ export default function WeekPage() {
           <><SkeletonCard /><SkeletonCard /></>
         ) : (
           <>
-            {/* Past days — collapsed by default */}
             <PastDaysDropdown
               days={pastDays}
               entriesByDay={entriesByDay}
@@ -338,7 +294,6 @@ export default function WeekPage() {
               onCheckEntry={handleCheckEntry}
             />
 
-            {/* Today — featured card */}
             {days.includes(today) && (
               <TodayCard
                 day={today}
@@ -348,7 +303,6 @@ export default function WeekPage() {
               />
             )}
 
-            {/* Future days */}
             {futureDays.map((day) => (
               <FutureDay
                 key={day}

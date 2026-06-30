@@ -1,14 +1,11 @@
 import { NextRequest } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { getUserProfile } from '@/lib/db';
-import { AI_MODEL } from '@/lib/models';
+import { AI_MODEL, anthropic } from '@/lib/models';
 import { exercisePrompt } from '@/prompts/exercise';
 import { mealsPrompt } from '@/prompts/meals';
 import { todosPrompt } from '@/prompts/todos';
 import { socialPrompt } from '@/prompts/social';
 import { eventsPrompt } from '@/prompts/events';
-
-const client = new Anthropic();
 
 const sectionPrompts: Record<string, string> = {
   exercise: exercisePrompt,
@@ -53,7 +50,7 @@ ${currentInput || 'Nothing entered yet.'}`;
       chatMessages = [{ role: 'user', content: `I'm planning my ${section} for the week.` }];
     }
 
-    const stream = await client.messages.create({
+    const stream = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 1024,
       system: systemPrompt,

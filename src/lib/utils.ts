@@ -29,6 +29,22 @@ export function getTodayStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+export function sortByTime<T extends { time: string | null }>(entries: T[]): T[] {
+  return [...entries].sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+}
+
+export function groupByDay<T extends { day: string }>(entries: T[]): Record<string, T[]> {
+  return entries.reduce<Record<string, T[]>>((acc, e) => {
+    (acc[e.day] ??= []).push(e);
+    return acc;
+  }, {});
+}
+
 export function getWeekDays(mondayStr: string): string[] {
   const result: string[] = [];
   const monday = new Date(mondayStr + 'T00:00:00');

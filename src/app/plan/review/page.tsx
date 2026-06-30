@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import Spinner from '@/components/Spinner';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ProposedDay {
@@ -127,7 +128,7 @@ function ReviewContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+        <Spinner className="w-8 h-8 border-2 border-pink-200 border-t-pink-500" />
         <p className="text-sm text-gray-500">Reviewing your week…</p>
       </div>
     );
@@ -239,7 +240,7 @@ function ReviewContent() {
                       >
                         {applying ? (
                           <>
-                            <span className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                            <Spinner className="w-3 h-3 border border-orange-400 border-t-transparent" />
                             Applying…
                           </>
                         ) : (
@@ -295,7 +296,7 @@ function ReviewContent() {
         >
           {confirming ? (
             <>
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <Spinner />
               Building your week…
             </>
           ) : (
@@ -321,7 +322,7 @@ export default function ReviewPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+          <Spinner className="w-8 h-8 border-2 border-pink-200 border-t-pink-500" />
         </div>
       }
     >

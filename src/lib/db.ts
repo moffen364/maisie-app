@@ -1,4 +1,7 @@
 import { neon } from '@neondatabase/serverless';
+import { getMondayOfWeek } from '@/lib/utils';
+
+export { getMondayOfWeek };
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -15,14 +18,6 @@ export async function getOrCreateWeek(weekStart: string): Promise<{ id: string; 
     RETURNING id, week_start::text
   `;
   return created[0] as { id: string; week_start: string };
-}
-
-export function getMondayOfWeek(date: Date = new Date()): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().split('T')[0];
 }
 
 export async function getUserProfile(): Promise<string> {

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
-import { AI_MODEL } from '@/lib/models';
+import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { getMondayOfWeek } from '@/lib/utils';
-
-const client = new Anthropic();
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,7 +70,7 @@ Generate 1-3 relevant nudges for RIGHT NOW. Focus on:
 Return JSON array: [{ message: string, category: "todo"|"social"|"health"|"errand" }]
 Only generate nudges that are genuinely useful right now. Return [] if nothing urgent.`;
 
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 512,
       messages: [{ role: 'user', content: 'Generate nudges for right now.' }],
@@ -87,7 +84,7 @@ Only generate nudges that are genuinely useful right now. Return [] if nothing u
 
     let nudges: { message: string; category: string }[] = [];
     try {
-      nudges = JSON.parse(rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
+      nudges = parseClaudeJSON(rawContent.text);
     } catch {
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 });
     }

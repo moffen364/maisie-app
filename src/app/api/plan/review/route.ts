@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
-import { AI_MODEL_SMART } from '@/lib/models';
-
-const client = new Anthropic();
+import { AI_MODEL_SMART, anthropic, parseClaudeJSON } from '@/lib/models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +63,7 @@ Respond with ONLY valid JSON.`;
 
     const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}\n\n## Already in my calendar this week\n${existingEntriesSummary}`;
 
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
       model: AI_MODEL_SMART,
       max_tokens: 4096,
       system: systemPrompt,
@@ -80,8 +77,7 @@ Respond with ONLY valid JSON.`;
 
     let reviewData: unknown;
     try {
-      const cleaned = rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-      reviewData = JSON.parse(cleaned);
+      reviewData = parseClaudeJSON(rawContent.text);
     } catch (parseErr) {
       console.error('[plan/review] JSON parse failed. Stop_reason:', response.stop_reason, 'Raw text (first 500):', rawContent.text.slice(0, 500));
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 });

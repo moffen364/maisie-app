@@ -3,8 +3,10 @@
 import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
 import type { CalendarEntry } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
-import { formatTime, getTodayStr } from '@/lib/utils';
+import { formatTime, getTodayStr, sortByTime } from '@/lib/utils';
+import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
+import CheckCircleButton from '@/components/CheckCircleButton';
 import QuickAddSheet from '@/components/QuickAddSheet';
 
 const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -109,8 +111,6 @@ function DaySheet({
   const [displayEntries, setDisplayEntries] = useState<CalendarEntry[]>([]);
   const [show, setShow] = useState(false);
 
-  // Sync content to display state before paint so the sheet is in the DOM
-  // in its closed position before the animation effect fires.
   useLayoutEffect(() => {
     if (dateStr) {
       setDisplayDateStr(dateStr);
@@ -124,7 +124,6 @@ function DaySheet({
     }
   }, [dateStr, entries]);
 
-  // Drive the open/close animation after the browser has painted the closed state.
   useEffect(() => {
     if (dateStr) {
       const frame = requestAnimationFrame(() => setShow(true));
@@ -140,12 +139,7 @@ function DaySheet({
     weekday: 'long', day: 'numeric', month: 'long',
   });
 
-  const sorted = [...displayEntries].sort((a, b) => {
-    if (!a.time && !b.time) return 0;
-    if (!a.time) return 1;
-    if (!b.time) return -1;
-    return a.time.localeCompare(b.time);
-  });
+  const sorted = sortByTime(displayEntries);
 
   return (
     <>
@@ -155,10 +149,14 @@ function DaySheet({
       />
       <div className={`fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none`}>
         <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[70vh] flex flex-col pointer-events-auto transition-all duration-200 ease-out ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-        <div className="p-4 flex-1 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900">{label}</h2>
-            <div className="flex items-center gap-3">
+          <div className="p-4 flex-1 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={onClose} className="text-gray-400 active:text-gray-600 -ml-1 p-1">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-gray-900">{label}</h2>
               <button
                 onClick={onAddToDay}
                 className="flex items-center gap-1 text-sm font-medium text-pink-500 active:text-pink-700"
@@ -169,51 +167,36 @@ function DaySheet({
                 </svg>
                 Add
               </button>
-              <button onClick={onClose} className="text-gray-300 active:text-gray-500 p-1 -mr-1">
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
-              </button>
             </div>
-          </div>
 
-          {sorted.length === 0 ? (
-            <div className="py-6 text-center">
-              <p className="text-sm text-gray-400">Nothing planned</p>
-              <p className="text-xs text-gray-300 mt-1">Tap Add to schedule something</p>
-            </div>
-          ) : (
-            sorted.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5 cursor-pointer active:bg-brand-faint"
-                onClick={() => onOpenEntry(entry)}
-              >
-                <button
-                  onClick={(ev) => { ev.stopPropagation(); onCheckEntry(entry.id, !entry.completed); }}
-                  className="shrink-0 w-10 h-10 flex items-center justify-center -ml-2"
-                  aria-label={entry.completed ? 'Mark incomplete' : 'Mark complete'}
-                >
-                  {entry.completed ? (
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="9" fill="#22c55e" />
-                      <path d="M5.5 10.5l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="9" stroke="#d1d5db" strokeWidth="1.5" />
-                    </svg>
-                  )}
-                </button>
-                <span className={`shrink-0 w-2 h-2 rounded-full ${CATEGORY_DOT[entry.category]}`} />
-                <span className={`flex-1 text-sm truncate ${entry.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
-                  {entry.title}
-                </span>
-                {entry.time && (
-                  <span className="text-xs text-gray-400 shrink-0">{formatTime(entry.time)}</span>
-                )}
+            {sorted.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-sm text-gray-400">Nothing planned</p>
+                <p className="text-xs text-gray-300 mt-1">Tap Add to schedule something</p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              sorted.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5 cursor-pointer active:bg-brand-faint"
+                  onClick={() => onOpenEntry(entry)}
+                >
+                  <CheckCircleButton
+                    checked={entry.completed}
+                    onClick={(ev) => { ev.stopPropagation(); onCheckEntry(entry.id, !entry.completed); }}
+                    className="shrink-0 w-10 h-10"
+                  />
+                  <span className={`shrink-0 w-2 h-2 rounded-full ${CATEGORY_DOT[entry.category]}`} />
+                  <span className={`flex-1 text-sm truncate ${entry.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                    {entry.title}
+                  </span>
+                  {entry.time && (
+                    <span className="text-xs text-gray-400 shrink-0">{formatTime(entry.time)}</span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -251,7 +234,7 @@ export default function YearPage() {
   const year = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
 
-  const [entries, setEntries] = useState<CalendarEntry[]>([]);
+  const { entries, setEntries, entriesByDay, updateEntry, deleteEntry, checkEntry } = useCalendarEntries();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -285,39 +268,23 @@ export default function YearPage() {
     }
   }, [loading, currentMonth]);
 
-  const entriesByDay = entries.reduce<Record<string, CalendarEntry[]>>((acc, e) => {
-    if (!acc[e.day]) acc[e.day] = [];
-    acc[e.day].push(e);
-    return acc;
-  }, {});
-
   const handleToggleEntry = useCallback((id: string, done: boolean) => {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, completed: done } : e)));
-    setDetailEntry((prev) => prev && prev.id === id ? { ...prev, completed: done } : prev);
-  }, []);
+    updateEntry(id, { completed: done });
+    setDetailEntry((prev) => prev?.id === id ? { ...prev, completed: done } : prev);
+  }, [updateEntry]);
 
   async function handleCheckEntry(id: string, done: boolean) {
-    handleToggleEntry(id, done);
-    try {
-      const res = await fetch('/api/calendar', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, completed: done }),
-      });
-      if (!res.ok) throw new Error();
-    } catch {
-      handleToggleEntry(id, !done);
-    }
+    await checkEntry(id, done, handleToggleEntry);
   }
 
   function handleDeleteEntry(id: string) {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    deleteEntry(id);
     setDetailEntry(null);
   }
 
   function handleNotesChange(id: string, notes: string | null) {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, notes } : e)));
-    setDetailEntry((prev) => prev && prev.id === id ? { ...prev, notes } : prev);
+    updateEntry(id, { notes });
+    setDetailEntry((prev) => prev?.id === id ? { ...prev, notes } : prev);
   }
 
   function handleQuickAddClose() {

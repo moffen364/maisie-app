@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Spinner from '@/components/Spinner';
 
 interface Props {
   open: boolean;
@@ -132,7 +133,7 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
               >
                 {loading ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Spinner />
                     Adding…
                   </>
                 ) : (

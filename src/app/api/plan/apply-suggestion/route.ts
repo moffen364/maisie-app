@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
-import { AI_MODEL } from '@/lib/models';
-
-const client = new Anthropic();
+import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +38,7 @@ ${JSON.stringify(calendarEntries, null, 2)}
 Current todos:
 ${JSON.stringify(todos, null, 2)}`;
 
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 2048,
       system: systemPrompt,
@@ -53,8 +50,7 @@ ${JSON.stringify(todos, null, 2)}`;
       return NextResponse.json({ error: 'Unexpected response from Claude' }, { status: 500 });
     }
 
-    const cleaned = rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    const updated = JSON.parse(cleaned);
+    const updated = parseClaudeJSON(rawContent.text);
 
     return NextResponse.json(updated);
   } catch (error) {

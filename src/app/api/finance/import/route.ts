@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sql from '@/lib/db';
-import { AI_MODEL } from '@/lib/models';
+import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { financeImportSystemPrompt } from '@/prompts/finance';
 import { ParsedTransaction } from '@/lib/types';
-
-const client = new Anthropic();
 
 export async function POST(req: Request) {
   try {
@@ -22,7 +19,7 @@ export async function POST(req: Request) {
       .replace('{{MONTHLY_TAKE_HOME}}', String(profile.monthly_take_home))
       .replace('{{FIXED_EXPENSES}}', JSON.stringify(profile.fixed_expenses));
 
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 4096,
       system: systemPrompt,
@@ -34,13 +31,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unexpected response from Claude' }, { status: 500 });
     }
 
-    let text = rawContent.text.trim();
-    // Strip markdown code fences if present
-    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-
     let transactions: ParsedTransaction[];
     try {
-      transactions = JSON.parse(text);
+      transactions = parseClaudeJSON<ParsedTransaction[]>(rawContent.text);
     } catch {
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 });
     }

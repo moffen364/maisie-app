@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FixedExpense, FinanceCategory, CategoryBudgets, FINANCE_CATEGORY_LABELS, FINANCE_CATEGORIES } from '@/lib/types';
+import Spinner from '@/components/Spinner';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -112,7 +113,7 @@ export default function SettingsPage() {
 
         {loading ? (
           <div className="bg-white border border-pink-100 rounded-2xl p-4 flex items-center justify-center min-h-32">
-            <div className="w-5 h-5 border-2 border-pink-100 border-t-pink-500 rounded-full animate-spin" />
+            <Spinner className="w-5 h-5 border-2 border-pink-100 border-t-pink-500" />
           </div>
         ) : editing ? (
           <div>
@@ -155,7 +156,7 @@ export default function SettingsPage() {
 
         {financeLoading ? (
           <div className="bg-white border border-pink-100 rounded-2xl p-4 flex items-center justify-center min-h-16">
-            <div className="w-5 h-5 border-2 border-pink-100 border-t-pink-500 rounded-full animate-spin" />
+            <Spinner className="w-5 h-5 border-2 border-pink-100 border-t-pink-500" />
           </div>
         ) : (
           <div className="bg-white border border-pink-100 rounded-2xl p-4 space-y-4">

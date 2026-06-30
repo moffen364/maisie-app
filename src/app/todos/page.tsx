@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import type { Todo } from '@/lib/types';
 import { getMondayOfWeek } from '@/lib/utils';
+import CheckCircleButton from '@/components/CheckCircleButton';
 
 function TodoRow({
   todo,
@@ -13,22 +14,10 @@ function TodoRow({
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5">
-      <button
+      <CheckCircleButton
+        checked={todo.completed}
         onClick={() => onCheck(todo.id, !todo.completed)}
-        className="shrink-0 w-11 h-11 flex items-center justify-center -ml-2"
-        aria-label={todo.completed ? 'Mark incomplete' : 'Mark complete'}
-      >
-        {todo.completed ? (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" fill="#22c55e" />
-            <path d="M5.5 10.5l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9" stroke="#d1d5db" strokeWidth="1.5" />
-          </svg>
-        )}
-      </button>
+      />
       <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
         {todo.title}
       </span>

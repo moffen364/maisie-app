@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile, updateUserProfile } from '@/lib/db';
-import { AI_MODEL } from '@/lib/models';
-
-const client = new Anthropic();
+import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 
 interface CalendarEntryInput {
   day: string;
@@ -58,7 +55,7 @@ Respond with ONLY valid JSON.`;
 
   const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}`;
 
-  const response = await client.messages.create({
+  const response = await anthropic.messages.create({
     model: AI_MODEL,
     max_tokens: 4096,
     system: systemPrompt,
@@ -70,8 +67,7 @@ Respond with ONLY valid JSON.`;
     throw new Error('Unexpected response from Claude');
   }
 
-  const cleaned = rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  return JSON.parse(cleaned) as ReviewResult;
+  return parseClaudeJSON<ReviewResult>(rawContent.text);
 }
 
 export async function POST(request: NextRequest) {
@@ -145,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // Append anything new learned to the profile — never replace it
     if (inputsSummary) {
-      const profileUpdateResponse = await client.messages.create({
+      const profileUpdateResponse = await anthropic.messages.create({
         model: AI_MODEL,
         max_tokens: 512,
         messages: [

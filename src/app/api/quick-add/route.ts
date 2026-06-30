@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
-import { AI_MODEL } from '@/lib/models';
+import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { getMondayOfWeek } from '@/lib/utils';
-
-const client = new Anthropic();
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +62,7 @@ ${targetDate
 Always schedule in the future: if a named weekday (e.g. "Tuesday") would fall on or before today, use next week's occurrence.
 Respond with ONLY valid JSON, no markdown.`;
 
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 512,
       system: systemPrompt,
@@ -88,7 +85,7 @@ Respond with ONLY valid JSON, no markdown.`;
     };
 
     try {
-      data = JSON.parse(rawContent.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
+      data = parseClaudeJSON(rawContent.text);
     } catch {
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 });
     }
