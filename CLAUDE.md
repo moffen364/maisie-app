@@ -33,7 +33,7 @@ See `DECISIONS.md` for deliberate product decisions (navigation structure, no-au
 
 ### Key data flows
 
-**Sunday planning:** user steps through 5 sections in `/plan` → each section's text is saved to `section_inputs` via `POST /api/plan/section` → after all 5, `/plan/review` calls `POST /api/plan/review` which asks Claude to generate a structured plan (`{ positives, issues, proposedWeek }`) → confirming calls `POST /api/plan/confirm` which writes all `calendar_entries` + `todos` to the DB and updates the user profile.
+**Sunday planning:** user steps through 5 sections + 1 finance step in `/plan` → each section's text is saved to `section_inputs` via `POST /api/plan/section` → after all steps, `/plan/review` calls `POST /api/plan/review` which asks Claude to generate a structured plan (`{ positives, issues, proposedWeek }`) → individual suggestions can be fixed via `POST /api/plan/apply-suggestion` without leaving the review → confirming calls `POST /api/plan/confirm` which writes all `calendar_entries` + `todos` to the DB and updates the user profile.
 
 **Mid-week quick-add:** `QuickAddSheet` → `POST /api/quick-add` → Claude parses natural language → inserts into `calendar_entries` or `todos`.
 
@@ -47,21 +47,27 @@ Schema in `src/db/schema.sql`. Key tables: `user_profile`, `weeks`, `calendar_en
 
 DB helpers in `src/lib/db.ts` (server-only): `sql` tagged template, `getOrCreateWeek`, `getUserProfile`, `updateUserProfile`. **Note:** `db.ts` also exports its own `getMondayOfWeek` for server-side use; the one in `src/lib/utils.ts` is for client components only — don't mix them.
 
-Pure client-safe utils in `src/lib/utils.ts`: `getMondayOfWeek`, `getTodayStr`, `getWeekDays`, `formatDay`, `formatShortDay`, `formatTime`.
+Pure client-safe utils in `src/lib/utils.ts`: `getMondayOfWeek`, `getTodayStr`, `getWeekDays`, `formatDay`, `formatShortDay`, `formatTime`, `sortByTime`, `groupByDay`.
 
 ### AI (Anthropic SDK)
 
-Model: `claude-sonnet-4-6`. All calls are server-side (API routes only — key never reaches the client). The chat route (`/api/plan/chat`) streams via `ReadableStream`; all other Claude calls are non-streaming.
+Two model tiers defined in `src/lib/models.ts` (both overridable via env vars):
+- `AI_MODEL` (`CLAUDE_MODEL` env, default `claude-haiku-4-5-20251001`) — fast/cheap, used for simple classification tasks
+- `AI_MODEL_SMART` (`CLAUDE_MODEL_SMART` env, default `claude-sonnet-4-6`) — used for planning, review, and natural-language parsing
+
+All calls are server-side (API routes only — key never reaches the client). The chat route (`/api/plan/chat`) streams via `ReadableStream`; all other Claude calls are non-streaming.
 
 ### Frontend
 
 Next.js App Router, Tailwind v4 (`@import "tailwindcss"` — no `tailwind.config`). All interactive components are client components (`'use client'`). No icon libraries — all SVGs are inline.
 
-**Category colour system** is defined in `src/lib/types.ts` as `CATEGORY_COLORS` and `CATEGORY_DOT` — import from there rather than hardcoding Tailwind classes. Finance categories have their own parallel `FINANCE_CATEGORY_DOT` and `FINANCE_CATEGORY_LABELS` in the same file.
+**Category colour system** is defined in `src/lib/types.ts` as `CATEGORY_COLORS`, `CATEGORY_DOT` — import from there rather than hardcoding Tailwind classes. Finance categories have their own parallel `FINANCE_CATEGORY_COLORS`, `FINANCE_CATEGORY_DOT`, and `FINANCE_CATEGORY_LABELS` in the same file.
 
-**Bottom nav** is in `src/components/BottomNav.tsx` (included in root layout). Tabs: Today `/` | Week `/week` | + (QuickAddSheet) | Plan `/plan` | Finance `/finance`. It owns the `QuickAddSheet` modal state. The `+` tab opens a sheet, not a page.
+**Bottom nav** is in `src/components/BottomNav.tsx` (included in root layout). Tabs: Week `/` | Year `/week` | + (QuickAddSheet) | To-Dos `/todos` | Finance `/finance`. It owns the `QuickAddSheet` modal state. The `+` tab opens a sheet, not a page. Note: the route names and nav labels are deliberately mismatched — the "Week" timeline view lives at `/` and the "Year" calendar lives at `/week`.
 
-**Settings** (`/settings`) is not in the bottom nav — it is linked from the gear icon on the `/nudges` page. It manages the `user_profile` text and `finance_profile` (monthly take-home + fixed expenses list).
+**Plan** (`/plan`) is accessible but not in the bottom nav. It is the Sunday planning wizard.
+
+**Settings** (`/settings`) is not in the bottom nav — it is linked from the gear icon on the root `/` page. It manages the `user_profile` text and `finance_profile` (monthly take-home + fixed expenses list).
 
 Layout sets `max-w-lg mx-auto pb-24` on the main content area — page components don't need to add bottom padding. `/plan/review` wraps its content in `<Suspense>` because it calls `useSearchParams()`.
 

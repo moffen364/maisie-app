@@ -138,15 +138,20 @@ export default function EntryDetailSheet({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Sheet */}
-      <div className={`fixed bottom-0 inset-x-0 bg-white rounded-t-2xl z-50 p-4 max-w-lg mx-auto transition-transform duration-300 ease-out ${show ? 'translate-y-0' : 'translate-y-full'}`}>
-        {/* Drag handle */}
-        <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mb-4" />
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none">
+        <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col pointer-events-auto transition-all duration-200 ease-out ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className="p-4 pb-2 flex justify-end">
+          <button onClick={onClose} className="text-gray-400 active:text-gray-600 p-1 -mr-1">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+        <div className="px-4 pb-6 overflow-y-auto flex-1">
 
         {/* Category badge */}
         <span
@@ -238,9 +243,8 @@ export default function EntryDetailSheet({
               : 'Delete entry'}
           </button>
         </div>
-
-        {/* Safe area spacer */}
-        <div className="h-safe-area-inset-bottom pb-6" />
+        </div>
+        </div>
       </div>
     </>
   );
