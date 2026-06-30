@@ -77,7 +77,7 @@ Respond with ONLY valid JSON.`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { weekStart } = body;
+    const { weekStart, calendarEntries: prebuiltEntries, todos: prebuiltTodos } = body;
 
     if (!weekStart) {
       return NextResponse.json({ error: 'weekStart is required' }, { status: 400 });
@@ -86,10 +86,18 @@ export async function POST(request: NextRequest) {
     const week = await getOrCreateWeek(weekStart);
     const profile = await getUserProfile();
 
-    // Generate the structured plan via Claude
-    const planData = await generateWeekPlan(weekStart, week.id, profile);
-
-    const { calendarEntries = [], todos = [] } = planData;
+    // Use pre-built entries from the review page if provided (preserves applied suggestions),
+    // otherwise fall back to generating via Claude
+    let calendarEntries: CalendarEntryInput[];
+    let todos: TodoInput[];
+    if (prebuiltEntries && prebuiltTodos) {
+      calendarEntries = prebuiltEntries;
+      todos = prebuiltTodos;
+    } else {
+      const planData = await generateWeekPlan(weekStart, week.id, profile);
+      calendarEntries = planData.calendarEntries ?? [];
+      todos = planData.todos ?? [];
+    }
 
     // Clean slate: delete existing entries for this week
     await sql`DELETE FROM calendar_entries WHERE week_id = ${week.id}`;

@@ -8,10 +8,25 @@ interface ProposedDay {
   items: string[];
 }
 
+interface CalendarEntry {
+  day: string;
+  time: string | null;
+  category: string;
+  title: string;
+  notes: string | null;
+}
+
+interface Todo {
+  title: string;
+  due_day: string | null;
+}
+
 interface ReviewData {
   positives: string[];
   issues: string[];
   proposedWeek: ProposedDay[];
+  calendarEntries: CalendarEntry[];
+  todos: Todo[];
 }
 
 function ReviewContent() {
@@ -23,6 +38,8 @@ function ReviewContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [appliedIssues, setAppliedIssues] = useState<Set<number>>(new Set());
+  const [applyingIssue, setApplyingIssue] = useState<number | null>(null);
 
   useEffect(() => {
     if (!weekStart) {
@@ -51,14 +68,53 @@ function ReviewContent() {
       });
   }, [weekStart]);
 
+  async function handleApplySuggestion(issueIndex: number, issueText: string) {
+    if (!review || applyingIssue !== null) return;
+    setApplyingIssue(issueIndex);
+    try {
+      const res = await fetch('/api/plan/apply-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStart,
+          issueText,
+          proposedWeek: review.proposedWeek,
+          calendarEntries: review.calendarEntries,
+          todos: review.todos,
+        }),
+      });
+      if (!res.ok) throw new Error('Apply failed');
+      const updated = await res.json();
+      setReview((prev) =>
+        prev
+          ? {
+              ...prev,
+              proposedWeek: updated.proposedWeek ?? prev.proposedWeek,
+              calendarEntries: updated.calendarEntries ?? prev.calendarEntries,
+              todos: updated.todos ?? prev.todos,
+            }
+          : prev,
+      );
+      setAppliedIssues((prev) => new Set(prev).add(issueIndex));
+    } catch {
+      setError('Could not apply suggestion. Please try again.');
+    } finally {
+      setApplyingIssue(null);
+    }
+  }
+
   async function handleConfirm() {
-    if (confirming) return;
+    if (confirming || !review) return;
     setConfirming(true);
     try {
       const res = await fetch('/api/plan/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart }),
+        body: JSON.stringify({
+          weekStart,
+          calendarEntries: review.calendarEntries,
+          todos: review.todos,
+        }),
       });
       if (!res.ok) throw new Error('Confirm failed');
       router.push('/');
@@ -156,13 +212,45 @@ function ReviewContent() {
         {review.issues.length === 0 ? (
           <p className="mt-2 text-sm text-orange-900">Everything looks balanced!</p>
         ) : (
-          <ul className="mt-2 flex flex-col gap-1.5">
-            {review.issues.map((item, i) => (
-              <li key={i} className="text-sm text-orange-900 flex items-start gap-2">
-                <span className="mt-1.5 w-1 h-1 rounded-full bg-orange-500 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
+          <ul className="mt-2 flex flex-col gap-3">
+            {review.issues.map((item, i) => {
+              const applied = appliedIssues.has(i);
+              const applying = applyingIssue === i;
+              return (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-orange-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${applied ? 'text-orange-400 line-through' : 'text-orange-900'}`}>
+                      {item}
+                    </p>
+                    {applied ? (
+                      <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M2 6l2.5 2.5L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Applied
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleApplySuggestion(i, item)}
+                        disabled={applyingIssue !== null}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-orange-700 border border-orange-300 rounded-lg px-2.5 py-1 bg-white hover:bg-orange-50 transition-colors disabled:opacity-50"
+                      >
+                        {applying ? (
+                          <>
+                            <span className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                            Applying…
+                          </>
+                        ) : (
+                          'Apply suggestion'
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
