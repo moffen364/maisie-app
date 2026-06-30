@@ -121,9 +121,16 @@ function FutureDay({
     return a.time.localeCompare(b.time);
   });
 
+  const date = new Date(day + 'T00:00:00');
+  const weekdayLabel = date.toLocaleDateString('en-GB', { weekday: 'short' });
+  const dateLabel = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
   return (
     <div className="mx-4 mb-4">
-      <p className="text-sm font-medium text-gray-400 mb-2">{formatShortDay(day)}</p>
+      <div className="mb-2.5">
+        <p className="text-[10px] font-semibold text-pink-400 uppercase tracking-widest mb-0.5">{weekdayLabel}</p>
+        <p className="text-base font-semibold text-gray-800">{dateLabel}</p>
+      </div>
       {sorted.map((entry) => (
         <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
       ))}
