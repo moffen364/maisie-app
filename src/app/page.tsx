@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import type { CalendarEntry, Todo, Nudge } from '@/lib/types';
+import { useEffect, useState, useCallback } from 'react';
+import type { CalendarEntry, Nudge } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
 import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays } from '@/lib/utils';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
@@ -190,86 +190,12 @@ function PastDaysDropdown({
   );
 }
 
-function TodosPanel({
-  todos,
-  onCheck,
-}: {
-  todos: Todo[];
-  onCheck: (id: string) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const touchStartY = useRef<number | null>(null);
-
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartY.current = e.touches[0].clientY;
-  }
-
-  function handleTouchEnd(e: React.TouchEvent) {
-    if (touchStartY.current === null) return;
-    const delta = touchStartY.current - e.changedTouches[0].clientY;
-    if (delta > 30) setExpanded(true);
-    else if (delta < -30) setExpanded(false);
-    touchStartY.current = null;
-  }
-
-  return (
-    <div className="fixed bottom-0 inset-x-0 z-30 flex justify-center pointer-events-none">
-      <div
-        className="w-full max-w-lg bg-white border-t border-pink-100 shadow-[0_-8px_24px_rgba(219,39,119,0.08)] pointer-events-auto"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <button
-          className="w-full"
-          onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? 'Collapse to-dos' : 'Expand to-dos'}
-        >
-          <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mt-3 mb-2" />
-          <div className="px-4 pb-1 flex items-center justify-between">
-            <p className="text-xs font-semibold text-pink-400 uppercase tracking-widest">To-Dos</p>
-            {todos.length > 0 && (
-              <span className="text-xs text-gray-400">{todos.length} remaining</span>
-            )}
-          </div>
-        </button>
-        <div
-          className="overflow-y-auto px-4 pb-16 transition-[max-height] duration-300 ease-out"
-          style={{ maxHeight: expanded ? 'calc(60vh - 80px)' : '200px' }}
-        >
-          {todos.length === 0 ? (
-            <p className="py-4 text-sm text-center text-gray-400">All done for the week</p>
-          ) : (
-            todos.map((todo) => (
-              <div
-                key={todo.id}
-                className="flex items-center gap-2 px-3 py-2 mb-1.5 bg-white rounded-xl border border-pink-100 shadow-sm"
-              >
-                <button
-                  onClick={() => onCheck(todo.id)}
-                  className="shrink-0 w-10 h-10 flex items-center justify-center -ml-2"
-                  aria-label="Complete todo"
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#d1d5db" strokeWidth="1.5" />
-                  </svg>
-                </button>
-                <span className="text-sm text-gray-800 flex-1 truncate">{todo.title}</span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function WeekPage() {
   const weekStart = getMondayOfWeek();
   const today = getTodayStr();
   const days = getWeekDays(weekStart);
 
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
-  const [todos, setTodos] = useState<Todo[]>([]);
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -280,16 +206,14 @@ export default function WeekPage() {
       setLoading(true);
       setError(null);
       try {
-        const [calRes, todoRes, nudgeRes] = await Promise.all([
+        const [calRes, nudgeRes] = await Promise.all([
           fetch(`/api/calendar?weekStart=${weekStart}`),
-          fetch(`/api/todos?weekStart=${weekStart}`),
           fetch(`/api/nudges?weekStart=${weekStart}`),
         ]);
-        const [calData, todoData, nudgeData] = await Promise.all([
-          calRes.json(), todoRes.json(), nudgeRes.json(),
+        const [calData, nudgeData] = await Promise.all([
+          calRes.json(), nudgeRes.json(),
         ]);
         setEntries(calData.entries ?? []);
-        setTodos(todoData.todos ?? []);
         setNudges(nudgeData.nudges ?? []);
       } catch {
         setError('Could not load data. Try refreshing.');
@@ -339,24 +263,8 @@ export default function WeekPage() {
     setSelectedEntry((prev) => prev && prev.id === id ? { ...prev, notes } : prev);
   }
 
-  async function handleCheckTodo(id: string) {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed: true } : t)));
-    try {
-      const res = await fetch('/api/todos', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, completed: true }),
-      });
-      if (!res.ok) throw new Error();
-    } catch {
-      setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed: false } : t)));
-    }
-  }
-
   const activeNudge = nudges.filter((n) => !n.dismissed)
     .sort((a, b) => b.triggered_at.localeCompare(a.triggered_at))[0] ?? null;
-
-  const activeTodos = todos.filter((t) => !t.completed);
 
   const entriesByDay = entries.reduce<Record<string, CalendarEntry[]>>((acc, e) => {
     if (!acc[e.day]) acc[e.day] = [];
@@ -410,7 +318,7 @@ export default function WeekPage() {
 
       {error && <p className="mx-4 mt-3 text-sm text-red-600">{error}</p>}
 
-      <div className="mt-4 pb-[260px]">
+      <div className="mt-4 pb-28">
         {loading ? (
           <><SkeletonCard /><SkeletonCard /></>
         ) : (
@@ -455,7 +363,7 @@ export default function WeekPage() {
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-gray-500 mb-1">Nothing planned this week</p>
-                <p className="text-xs text-gray-400">Head to <span className="font-semibold">Plan</span> to set up your week</p>
+                <p className="text-xs text-gray-400">Tap <span className="font-semibold">+</span> to plan your week</p>
               </div>
             )}
           </>
@@ -469,8 +377,6 @@ export default function WeekPage() {
         onToggle={handleToggleEntry}
         onNotesChange={handleNotesChange}
       />
-
-      <TodosPanel todos={activeTodos} onCheck={handleCheckTodo} />
     </div>
   );
 }

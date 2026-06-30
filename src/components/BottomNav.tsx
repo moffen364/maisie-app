@@ -50,13 +50,21 @@ function YearGridIcon({ active }: { active: boolean }) {
   );
 }
 
-function PlanIcon({ active }: { active: boolean }) {
+function TodosIcon({ active }: { active: boolean }) {
+  const color = active ? ACTIVE_COLOR : INACTIVE_COLOR;
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR} strokeWidth={2}>
-      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-      <rect x="9" y="3" width="6" height="4" rx="1" />
-      <line x1="9" y1="12" x2="15" y2="12" />
-      <line x1="9" y1="16" x2="13" y2="16" />
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      {/* Circle checkbox — checked */}
+      <circle cx="5" cy="6" r="2" stroke={color} strokeWidth="1.5" />
+      <path d="M3.8 6l.9.9 1.8-1.8" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Circle checkbox — unchecked */}
+      <circle cx="5" cy="12" r="2" stroke={color} strokeWidth="1.5" opacity="0.7" />
+      {/* Circle checkbox — unchecked */}
+      <circle cx="5" cy="18" r="2" stroke={color} strokeWidth="1.5" opacity="0.4" />
+      {/* Text lines */}
+      <line x1="10" y1="6" x2="21" y2="6" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10" y1="12" x2="21" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+      <line x1="10" y1="18" x2="18" y2="18" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
     </svg>
   );
 }
@@ -110,12 +118,12 @@ export default function BottomNav() {
           </button>
 
           <Link
-            href="/plan"
+            href="/todos"
             className="flex flex-col items-center gap-0.5 px-4 py-1"
           >
-            <PlanIcon active={pathname === '/plan'} />
-            <span className={`text-[10px] font-medium ${pathname === '/plan' ? 'text-pink-600' : 'text-gray-400'}`}>
-              Plan
+            <TodosIcon active={pathname === '/todos'} />
+            <span className={`text-[10px] font-medium ${pathname === '/todos' ? 'text-pink-600' : 'text-gray-400'}`}>
+              To-Dos
             </span>
           </Link>
 

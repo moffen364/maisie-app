@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   open: boolean;
@@ -15,6 +16,7 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (open) {
@@ -50,11 +52,16 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
         onClose();
         setToast('');
       }, 1800);
-    } catch (err) {
+    } catch {
       setToast('Something went wrong — try again');
     } finally {
       setLoading(false);
     }
+  }
+
+  function handlePlanTab() {
+    onClose();
+    router.push('/plan');
   }
 
   if (!mounted) return null;
@@ -73,7 +80,21 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
           {/* Handle */}
           <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mb-4" />
 
-          <h2 className={`text-base font-semibold text-gray-900 ${targetDate ? 'mb-0.5' : 'mb-3'}`}>Quick add</h2>
+          {/* Tab bar — only when not scoped to a specific day */}
+          {!targetDate && (
+            <div className="flex border-b border-pink-100 mb-4 -mx-4 px-4">
+              <span className="pb-2 mr-6 text-sm font-semibold border-b-2 border-brand text-brand -mb-px">
+                Quick Add
+              </span>
+              <button
+                onClick={handlePlanTab}
+                className="pb-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 -mb-px hover:text-gray-600 transition-colors"
+              >
+                Plan my week
+              </button>
+            </div>
+          )}
+
           {targetDate && (
             <p className="text-xs text-pink-500 mb-3">
               {new Date(targetDate + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}

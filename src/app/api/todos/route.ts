@@ -29,6 +29,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { title, weekStart } = body;
+
+    if (!title?.trim() || !weekStart) {
+      return NextResponse.json({ error: 'title and weekStart are required' }, { status: 400 });
+    }
+
+    const week = await getOrCreateWeek(weekStart);
+
+    const [todo] = await sql`
+      INSERT INTO todos (week_id, title, completed)
+      VALUES (${week.id}, ${title.trim()}, false)
+      RETURNING id, week_id, title, due_day::text, completed
+    `;
+
+    return NextResponse.json({ todo });
+  } catch (error) {
+    console.error('[POST /api/todos]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
