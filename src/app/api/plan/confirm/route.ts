@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile, updateUserProfile } from '@/lib/db';
+import { AI_MODEL } from '@/lib/models';
 
 const client = new Anthropic();
 
@@ -58,7 +59,7 @@ Respond with ONLY valid JSON.`;
   const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: AI_MODEL,
     max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
     // Append anything new learned to the profile — never replace it
     if (inputsSummary) {
       const profileUpdateResponse = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: AI_MODEL,
         max_tokens: 512,
         messages: [
           {

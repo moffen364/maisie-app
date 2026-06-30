@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getUserProfile } from '@/lib/db';
+import { AI_MODEL } from '@/lib/models';
 import { exercisePrompt } from '@/prompts/exercise';
 import { mealsPrompt } from '@/prompts/meals';
 import { todosPrompt } from '@/prompts/todos';
@@ -53,7 +54,7 @@ ${currentInput || 'Nothing entered yet.'}`;
     }
 
     const stream = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: AI_MODEL,
       max_tokens: 1024,
       system: systemPrompt,
       messages: chatMessages,

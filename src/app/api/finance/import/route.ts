@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sql from '@/lib/db';
+import { AI_MODEL } from '@/lib/models';
 import { financeImportSystemPrompt } from '@/prompts/finance';
 import { ParsedTransaction } from '@/lib/types';
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
       .replace('{{FIXED_EXPENSES}}', JSON.stringify(profile.fixed_expenses));
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: AI_MODEL,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: 'user', content: rawText }],

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
+import { AI_MODEL_SMART } from '@/lib/models';
 
 const client = new Anthropic();
 
@@ -66,7 +67,7 @@ Respond with ONLY valid JSON.`;
     const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}\n\n## Already in my calendar this week\n${existingEntriesSummary}`;
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: AI_MODEL_SMART,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],

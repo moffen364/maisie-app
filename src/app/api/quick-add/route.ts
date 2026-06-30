@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
+import { AI_MODEL } from '@/lib/models';
 import { getMondayOfWeek } from '@/lib/utils';
 
 const client = new Anthropic();
@@ -61,10 +62,11 @@ Return a JSON object with these fields:
 ${targetDate
   ? `The user has selected ${targetDate} in their calendar — use that as the "day" unless the text clearly specifies a different day.`
   : `Today is ${today}. The current week runs from ${weekStart} to ${weekSunday}.`}
+Always schedule in the future: if a named weekday (e.g. "Tuesday") would fall on or before today, use next week's occurrence.
 Respond with ONLY valid JSON, no markdown.`;
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: AI_MODEL,
       max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: text }],

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
+import { AI_MODEL } from '@/lib/models';
 import { getMondayOfWeek } from '@/lib/utils';
 
 const client = new Anthropic();
@@ -73,7 +74,7 @@ Return JSON array: [{ message: string, category: "todo"|"social"|"health"|"erran
 Only generate nudges that are genuinely useful right now. Return [] if nothing urgent.`;
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: AI_MODEL,
       max_tokens: 512,
       messages: [{ role: 'user', content: 'Generate nudges for right now.' }],
       system: systemPrompt,
