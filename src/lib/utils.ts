@@ -1,8 +1,8 @@
 export function getMondayOfWeek(date: Date = new Date()): string {
   const d = new Date(date);
-  const day = d.getDay();
+  const day = d.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
+  d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().split('T')[0];
 }
 
