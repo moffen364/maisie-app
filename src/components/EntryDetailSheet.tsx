@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { CalendarEntry, Category } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_DOT } from '@/lib/types';
 import { formatShortDay, formatTime, formatDateRange } from '@/lib/utils';
+import { useModalTransition } from '@/hooks/useModalTransition';
+import CenteredModal from '@/components/CenteredModal';
 
 interface EntryDetailSheetProps {
   entry: CalendarEntry | null;
@@ -30,7 +32,7 @@ export default function EntryDetailSheet({
 }: EntryDetailSheetProps) {
   // Keep displayEntry alive during the close animation
   const [displayEntry, setDisplayEntry] = useState<CalendarEntry | null>(null);
-  const [show, setShow] = useState(false);
+  const { mounted, show } = useModalTransition(entry !== null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -42,20 +44,16 @@ export default function EntryDetailSheet({
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (entry) {
-      setDisplayEntry(entry);
-      const frame = requestAnimationFrame(() => requestAnimationFrame(() => setShow(true)));
-      return () => cancelAnimationFrame(frame);
-    } else {
-      setShow(false);
-      const t = setTimeout(() => {
-        setDisplayEntry(null);
-        setConfirmDelete(false);
-        setError(null);
-      }, 300);
-      return () => clearTimeout(t);
-    }
+    if (entry) setDisplayEntry(entry);
   }, [entry]);
+
+  useEffect(() => {
+    if (!mounted) {
+      setDisplayEntry(null);
+      setConfirmDelete(false);
+      setError(null);
+    }
+  }, [mounted]);
 
   // Reset notes when a different entry is opened
   useEffect(() => {
@@ -63,7 +61,7 @@ export default function EntryDetailSheet({
     setEditingNotes(false);
   }, [displayEntry?.id]);
 
-  if (!displayEntry) return null;
+  if (!mounted || !displayEntry) return null;
 
   const colorClasses = CATEGORY_COLORS[displayEntry.category];
   const dotClass = CATEGORY_DOT[displayEntry.category];
@@ -135,17 +133,7 @@ export default function EntryDetailSheet({
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none">
-        <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col pointer-events-auto transition-all duration-200 ease-out ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+    <CenteredModal show={show} onClose={onClose}>
         <div className="p-4 pb-2 flex justify-end">
           <button onClick={onClose} className="text-gray-400 active:text-gray-600 p-1 -mr-1">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
@@ -247,8 +235,6 @@ export default function EntryDetailSheet({
           </button>
         </div>
         </div>
-        </div>
-      </div>
-    </>
+    </CenteredModal>
   );
 }

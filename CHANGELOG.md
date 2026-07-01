@@ -4,6 +4,16 @@ Personal life planning app — release history.
 
 ---
 
+## 1 July 2026
+
+### 🐛 Fixed
+- **Quick Add now matches other modals** — tapping "Add" (from the `+` nav button or inside Year view) opens the same centered modal used for viewing days and events, instead of sliding up as a bottom sheet. The text field is auto-selected on open so the keyboard appears immediately.
+
+### ⚡ Under the hood
+- Extracted a shared `CenteredModal` component and `useModalTransition` hook, used by Quick Add, day detail, and event detail so all three stay visually consistent.
+
+---
+
 ## 30 June 2026
 
 ### ✨ New

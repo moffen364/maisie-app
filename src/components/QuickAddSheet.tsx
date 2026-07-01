@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/Spinner';
+import { useModalTransition } from '@/hooks/useModalTransition';
+import CenteredModal from '@/components/CenteredModal';
 
 interface Props {
   open: boolean;
@@ -14,27 +16,26 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState('');
-  const [mounted, setMounted] = useState(false);
-  const [show, setShow] = useState(false);
+  const { mounted, show } = useModalTransition(open);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     if (open) {
-      setMounted(true);
-      const frame = requestAnimationFrame(() => requestAnimationFrame(() => setShow(true)));
-      setTimeout(() => textareaRef.current?.focus(), 150);
-      return () => cancelAnimationFrame(frame);
-    } else {
-      setShow(false);
       const t = setTimeout(() => {
-        setMounted(false);
-        setInput('');
-        setToast('');
-      }, 300);
+        textareaRef.current?.focus();
+        textareaRef.current?.select();
+      }, 50);
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!mounted) {
+      setInput('');
+      setToast('');
+    }
+  }, [mounted]);
 
   async function handleSubmit() {
     if (!input.trim() || loading) return;
@@ -68,38 +69,37 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
   if (!mounted) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`}
-        onClick={onClose}
-      />
-
-      {/* Sheet */}
-      <div className={`fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-2xl safe-area-pb transition-transform duration-300 ease-out ${show ? 'translate-y-0' : 'translate-y-full'}`}>
+    <CenteredModal show={show} onClose={onClose} maxHeight="max-h-[80vh]">
         <div className="p-4">
-          {/* Handle */}
-          <div className="w-10 h-1 bg-pink-200 rounded-full mx-auto mb-4" />
-
           {/* Tab bar — only when not scoped to a specific day */}
           {!targetDate && (
-            <div className="flex border-b border-pink-100 mb-4 -mx-4 px-4">
-              <span className="pb-2 mr-6 text-sm font-semibold border-b-2 border-brand text-brand -mb-px">
-                Quick Add
-              </span>
-              <button
-                onClick={handlePlanTab}
-                className="pb-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 -mb-px hover:text-gray-600 transition-colors"
-              >
-                Plan my week
+            <div className="flex items-center justify-between border-b border-pink-100 mb-4 -mx-4 px-4">
+              <div className="flex">
+                <span className="pb-2 mr-6 text-sm font-semibold border-b-2 border-brand text-brand -mb-px">
+                  Quick Add
+                </span>
+                <button
+                  onClick={handlePlanTab}
+                  className="pb-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 -mb-px hover:text-gray-600 transition-colors"
+                >
+                  Plan my week
+                </button>
+              </div>
+              <button onClick={onClose} className="text-gray-400 active:text-gray-600 p-1 mb-2 -mr-1">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
               </button>
             </div>
           )}
 
           {targetDate && (
-            <p className="text-xs text-pink-500 mb-3">
-              {new Date(targetDate + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-pink-500">
+                {new Date(targetDate + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
+              </p>
+              <button onClick={onClose} className="text-gray-400 active:text-gray-600 p-1 -mr-1">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
+              </button>
+            </div>
           )}
 
           {toast ? (
@@ -143,7 +143,6 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
             </>
           )}
         </div>
-      </div>
-    </>
+    </CenteredModal>
   );
 }

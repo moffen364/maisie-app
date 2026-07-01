@@ -5,10 +5,12 @@ import type { CalendarEntry, Category } from '@/lib/types';
 import { CATEGORY_DOT, CATEGORY_ALLDAY_BAR } from '@/lib/types';
 import { formatTime, getTodayStr, sortByTime } from '@/lib/utils';
 import { useCalendarEntries } from '@/hooks/useCalendarEntries';
+import { useModalTransition } from '@/hooks/useModalTransition';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
 import CheckCircleButton from '@/components/CheckCircleButton';
 import QuickAddSheet from '@/components/QuickAddSheet';
 import AllDayBanner from '@/components/AllDayBanner';
+import CenteredModal from '@/components/CenteredModal';
 
 const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -134,31 +136,23 @@ function DaySheet({
 }) {
   const [displayDateStr, setDisplayDateStr] = useState<string | null>(null);
   const [displayEntries, setDisplayEntries] = useState<CalendarEntry[]>([]);
-  const [show, setShow] = useState(false);
+  const { mounted, show } = useModalTransition(dateStr !== null);
 
   useLayoutEffect(() => {
     if (dateStr) {
       setDisplayDateStr(dateStr);
       setDisplayEntries(entries);
-    } else {
-      const t = setTimeout(() => {
-        setDisplayDateStr(null);
-        setDisplayEntries([]);
-      }, 300);
-      return () => clearTimeout(t);
     }
   }, [dateStr, entries]);
 
   useEffect(() => {
-    if (dateStr) {
-      const frame = requestAnimationFrame(() => setShow(true));
-      return () => cancelAnimationFrame(frame);
-    } else {
-      setShow(false);
+    if (!mounted) {
+      setDisplayDateStr(null);
+      setDisplayEntries([]);
     }
-  }, [dateStr]);
+  }, [mounted]);
 
-  if (!displayDateStr) return null;
+  if (!mounted || !displayDateStr) return null;
 
   const label = new Date(displayDateStr + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -168,16 +162,10 @@ function DaySheet({
   const regular = sortByTime(displayEntries.filter((e) => e.end_day === null));
 
   return (
-    <>
-      <div
-        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-      />
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none`}>
-        <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[70vh] flex flex-col pointer-events-auto transition-all duration-200 ease-out ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+    <CenteredModal show={show} onClose={onClose} maxHeight="max-h-[70vh]">
           <div className="p-4 flex-1 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={onClose} className="text-gray-400 active:text-gray-600 -ml-1 p-1">
+            <div className="flex justify-end mb-2">
+              <button onClick={onClose} className="text-gray-400 active:text-gray-600 p-1 -mr-1">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -228,9 +216,7 @@ function DaySheet({
               </>
             )}
           </div>
-        </div>
-      </div>
-    </>
+    </CenteredModal>
   );
 }
 
