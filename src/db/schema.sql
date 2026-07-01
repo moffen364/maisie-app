@@ -19,12 +19,16 @@ CREATE TABLE IF NOT EXISTS calendar_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   week_id UUID NOT NULL REFERENCES weeks(id) ON DELETE CASCADE,
   day DATE NOT NULL,
+  end_day DATE,
   time TIME,
   category TEXT NOT NULL CHECK (category IN ('exercise', 'food', 'social', 'event', 'task')),
   title TEXT NOT NULL,
   notes TEXT,
   completed BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- Migration for existing installs (run once):
+-- ALTER TABLE calendar_entries ADD COLUMN IF NOT EXISTS end_day DATE;
 
 CREATE TABLE IF NOT EXISTS todos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

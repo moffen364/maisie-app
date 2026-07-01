@@ -38,6 +38,18 @@ export function sortByTime<T extends { time: string | null }>(entries: T[]): T[]
   });
 }
 
+export function formatDateRange(startStr: string, endStr: string): string {
+  const start = new Date(startStr + 'T00:00:00');
+  const end = new Date(endStr + 'T00:00:00');
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const startMonth = start.toLocaleDateString('en-GB', { month: 'short' });
+  const endMonth = end.toLocaleDateString('en-GB', { month: 'short' });
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  if (sameMonth) return `${startDay}–${endDay} ${startMonth}`;
+  return `${startDay} ${startMonth}–${endDay} ${endMonth}`;
+}
+
 export function groupByDay<T extends { day: string }>(entries: T[]): Record<string, T[]> {
   return entries.reduce<Record<string, T[]>>((acc, e) => {
     (acc[e.day] ??= []).push(e);

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
-import type { CalendarEntry } from '@/lib/types';
-import { CATEGORY_DOT } from '@/lib/types';
+import type { CalendarEntry, Category } from '@/lib/types';
+import { CATEGORY_DOT, CATEGORY_ALLDAY_BAR } from '@/lib/types';
 import { formatTime, getTodayStr, sortByTime } from '@/lib/utils';
 import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
 import CheckCircleButton from '@/components/CheckCircleButton';
 import QuickAddSheet from '@/components/QuickAddSheet';
+import AllDayBanner from '@/components/AllDayBanner';
 
 const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -39,6 +40,20 @@ function MonthGrid({
     cells.push({ day: d, dateStr });
   }
 
+  // Compute multi-day bar positions for this month
+  const bars: Record<string, { category: Category; isStart: boolean; isEnd: boolean }> = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const mdEntry = (entriesByDay[ds] ?? []).find((e) => e.end_day !== null);
+    if (mdEntry) {
+      bars[ds] = {
+        category: mdEntry.category,
+        isStart: mdEntry.day === ds,
+        isEnd: mdEntry.end_day === ds,
+      };
+    }
+  }
+
   return (
     <div className="mb-7">
       <h2 className="text-sm font-semibold text-gray-700 px-4 mb-2">
@@ -55,17 +70,27 @@ function MonthGrid({
             if (!cell) return <div key={`e-${i}`} />;
             const { day, dateStr } = cell;
             const dayEntries = entriesByDay[dateStr] ?? [];
+            const singleDayEntries = dayEntries.filter((e) => e.end_day === null);
             const isToday = dateStr === today;
             const isSelected = dateStr === selectedDay;
             const isPast = dateStr < today;
+            const bar = bars[dateStr];
             return (
               <button
                 key={dateStr}
                 onClick={() => onSelectDay(dateStr)}
-                className="flex flex-col items-center py-1"
+                className="relative flex flex-col items-center py-1"
               >
+                {bar && (
+                  <div className={`absolute top-1 h-7 z-0 ${CATEGORY_ALLDAY_BAR[bar.category]}
+                    ${bar.isStart && bar.isEnd ? 'left-1/4 right-1/4' :
+                      bar.isStart ? 'left-1/2 right-0' :
+                      bar.isEnd ? 'left-0 right-1/2' :
+                      'left-0 right-0'}`}
+                  />
+                )}
                 <span
-                  className={`w-7 h-7 flex items-center justify-center text-xs rounded-full font-medium
+                  className={`relative z-10 w-7 h-7 flex items-center justify-center text-xs rounded-full font-medium
                     ${isSelected
                       ? 'bg-pink-500 text-white'
                       : isToday
@@ -77,8 +102,8 @@ function MonthGrid({
                 >
                   {day}
                 </span>
-                <div className="flex gap-0.5 mt-0.5 h-1.5">
-                  {dayEntries.slice(0, 3).map((e, idx) => (
+                <div className="relative z-10 flex gap-0.5 mt-0.5 h-1.5">
+                  {singleDayEntries.slice(0, 3).map((e, idx) => (
                     <span key={idx} className={`w-1 h-1 rounded-full ${CATEGORY_DOT[e.category]}`} />
                   ))}
                 </div>
@@ -139,7 +164,8 @@ function DaySheet({
     weekday: 'long', day: 'numeric', month: 'long',
   });
 
-  const sorted = sortByTime(displayEntries);
+  const allDay = displayEntries.filter((e) => e.end_day !== null);
+  const regular = sortByTime(displayEntries.filter((e) => e.end_day === null));
 
   return (
     <>
@@ -169,32 +195,37 @@ function DaySheet({
               </button>
             </div>
 
-            {sorted.length === 0 ? (
+            {allDay.length === 0 && regular.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-sm text-gray-400">Nothing planned</p>
                 <p className="text-xs text-gray-300 mt-1">Tap Add to schedule something</p>
               </div>
             ) : (
-              sorted.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5 cursor-pointer active:bg-brand-faint"
-                  onClick={() => onOpenEntry(entry)}
-                >
-                  <CheckCircleButton
-                    checked={entry.completed}
-                    onClick={(ev) => { ev.stopPropagation(); onCheckEntry(entry.id, !entry.completed); }}
-                    className="shrink-0 w-10 h-10"
-                  />
-                  <span className={`shrink-0 w-2 h-2 rounded-full ${CATEGORY_DOT[entry.category]}`} />
-                  <span className={`flex-1 text-sm truncate ${entry.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
-                    {entry.title}
-                  </span>
-                  {entry.time && (
-                    <span className="text-xs text-gray-400 shrink-0">{formatTime(entry.time)}</span>
-                  )}
-                </div>
-              ))
+              <>
+                {allDay.map((entry) => (
+                  <AllDayBanner key={entry.id} entry={entry} onOpen={onOpenEntry} />
+                ))}
+                {regular.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5 cursor-pointer active:bg-brand-faint"
+                    onClick={() => onOpenEntry(entry)}
+                  >
+                    <CheckCircleButton
+                      checked={entry.completed}
+                      onClick={(ev) => { ev.stopPropagation(); onCheckEntry(entry.id, !entry.completed); }}
+                      className="shrink-0 w-10 h-10"
+                    />
+                    <span className={`shrink-0 w-2 h-2 rounded-full ${CATEGORY_DOT[entry.category]}`} />
+                    <span className={`flex-1 text-sm truncate ${entry.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                      {entry.title}
+                    </span>
+                    {entry.time && (
+                      <span className="text-xs text-gray-400 shrink-0">{formatTime(entry.time)}</span>
+                    )}
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>

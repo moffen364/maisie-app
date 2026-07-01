@@ -50,11 +50,12 @@ ${calendarSummary}
 Return a JSON object with these fields:
 - title: string (concise title for the entry)
 - category: one of "exercise", "food", "social", "event", "task"
-- day: YYYY-MM-DD (which day this should go on — use context and "tomorrow", "Thursday" etc to determine)
-- time: HH:MM or null
+- day: YYYY-MM-DD (start date — use context and "tomorrow", "Thursday", "24th August" etc to determine)
+- end_day: YYYY-MM-DD or null — ONLY set for multi-day events spanning more than one day (e.g. "trip to Noosa 24–26 Aug" → end_day: "2026-08-26"). Must be after "day". null for all other entries.
+- time: HH:MM or null (always null when end_day is set)
 - notes: string or null
-- isTask: boolean (true if this is a to-do/errand rather than a calendar entry)
-- message: string (a short confirmation message like "Added to Thursday afternoon" or "Added to tomorrow")
+- isTask: boolean (true if this is a to-do/errand rather than a calendar entry; always false when end_day is set)
+- message: string (a short confirmation message — for multi-day: "Trip to Noosa added, 24–26 Aug")
 
 ${targetDate
   ? `The user has selected ${targetDate} in their calendar — use that as the "day" unless the text clearly specifies a different day.`
@@ -78,6 +79,7 @@ Respond with ONLY valid JSON, no markdown.`;
       title: string;
       category: string;
       day: string;
+      end_day: string | null;
       time: string | null;
       notes: string | null;
       isTask: boolean;
@@ -97,11 +99,12 @@ Respond with ONLY valid JSON, no markdown.`;
       `;
     } else {
       await sql`
-        INSERT INTO calendar_entries (week_id, day, time, category, title, notes, completed)
+        INSERT INTO calendar_entries (week_id, day, end_day, time, category, title, notes, completed)
         VALUES (
           ${week.id},
           ${data.day}::date,
-          ${data.time ?? null},
+          ${data.end_day ?? null},
+          ${data.end_day ? null : (data.time ?? null)},
           ${data.category},
           ${data.title},
           ${data.notes ?? null},

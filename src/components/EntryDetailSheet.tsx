@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { CalendarEntry, Category } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_DOT } from '@/lib/types';
-import { formatShortDay, formatTime } from '@/lib/utils';
+import { formatShortDay, formatTime, formatDateRange } from '@/lib/utils';
 
 interface EntryDetailSheetProps {
   entry: CalendarEntry | null;
@@ -172,8 +172,9 @@ export default function EntryDetailSheet({
 
         {/* Day + time */}
         <p className="text-sm text-gray-500 mb-3">
-          {formatShortDay(displayEntry.day)}
-          {displayEntry.time ? ` · ${formatTime(displayEntry.time)}` : ''}
+          {displayEntry.end_day
+            ? formatDateRange(displayEntry.day, displayEntry.end_day)
+            : formatShortDay(displayEntry.day) + (displayEntry.time ? ` · ${formatTime(displayEntry.time)}` : '')}
         </p>
 
         {/* Notes */}
@@ -219,13 +220,15 @@ export default function EntryDetailSheet({
 
         {/* Actions */}
         <div className="mt-2">
-          <button
-            onClick={handleToggle}
-            disabled={toggling}
-            className="w-full py-3 rounded-xl bg-brand text-sm font-semibold text-white active:bg-brand-dark disabled:opacity-50"
-          >
-            {displayEntry.completed ? 'Mark incomplete' : 'Mark done'}
-          </button>
+          {!displayEntry.end_day && (
+            <button
+              onClick={handleToggle}
+              disabled={toggling}
+              className="w-full py-3 rounded-xl bg-brand text-sm font-semibold text-white active:bg-brand-dark disabled:opacity-50"
+            >
+              {displayEntry.completed ? 'Mark incomplete' : 'Mark done'}
+            </button>
+          )}
 
           <button
             onClick={handleDelete}
@@ -240,7 +243,7 @@ export default function EntryDetailSheet({
               ? 'Deleting…'
               : confirmDelete
               ? 'Tap again to confirm'
-              : 'Delete entry'}
+              : displayEntry.end_day ? 'Delete event' : 'Delete entry'}
           </button>
         </div>
         </div>

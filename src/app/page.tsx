@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { CalendarEntry, Nudge } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
 import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays, sortByTime } from '@/lib/utils';
+import AllDayBanner from '@/components/AllDayBanner';
 import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
 import CheckCircleButton from '@/components/CheckCircleButton';
@@ -65,7 +66,8 @@ function TodayCard({
     weekday: 'long', day: 'numeric', month: 'long',
   });
 
-  const sorted = sortByTime(entries);
+  const allDay = entries.filter((e) => e.end_day !== null);
+  const regular = sortByTime(entries.filter((e) => e.end_day === null));
 
   return (
     <div className="mx-4 mb-5 rounded-2xl overflow-hidden shadow-sm border border-pink-200">
@@ -74,12 +76,17 @@ function TodayCard({
         <p className="text-2xl font-bold text-white leading-tight">{label}</p>
       </div>
       <div className="bg-white px-3 pt-3 pb-2">
-        {sorted.length === 0 ? (
+        {allDay.length === 0 && regular.length === 0 ? (
           <p className="text-sm text-gray-400 py-2 text-center">Nothing scheduled — enjoy the free time</p>
         ) : (
-          sorted.map((entry) => (
-            <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
-          ))
+          <>
+            {allDay.map((entry) => (
+              <AllDayBanner key={entry.id} entry={entry} onOpen={onOpenEntry} />
+            ))}
+            {regular.map((entry) => (
+              <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
+            ))}
+          </>
         )}
       </div>
     </div>
@@ -97,9 +104,11 @@ function FutureDay({
   onOpenEntry: (e: CalendarEntry) => void;
   onCheckEntry: (id: string, done: boolean) => void;
 }) {
-  if (entries.length === 0) return null;
+  const allDay = entries.filter((e) => e.end_day !== null);
+  const regular = sortByTime(entries.filter((e) => e.end_day === null));
 
-  const sorted = sortByTime(entries);
+  if (allDay.length === 0 && regular.length === 0) return null;
+
   const date = new Date(day + 'T00:00:00');
   const weekdayLabel = date.toLocaleDateString('en-GB', { weekday: 'short' });
   const dateLabel = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -110,7 +119,10 @@ function FutureDay({
         <p className="text-[10px] font-semibold text-pink-400 uppercase tracking-widest mb-0.5">{weekdayLabel}</p>
         <p className="text-base font-semibold text-gray-800">{dateLabel}</p>
       </div>
-      {sorted.map((entry) => (
+      {allDay.map((entry) => (
+        <AllDayBanner key={entry.id} entry={entry} onOpen={onOpenEntry} />
+      ))}
+      {regular.map((entry) => (
         <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
       ))}
     </div>
@@ -154,11 +166,16 @@ function PastDaysDropdown({
         <div className="mt-2 space-y-4">
           {days.map((day) => {
             const dayEntries = entriesByDay[day] ?? [];
-            if (dayEntries.length === 0) return null;
+            const allDay = dayEntries.filter((e) => e.end_day !== null);
+            const regular = sortByTime(dayEntries.filter((e) => e.end_day === null));
+            if (allDay.length === 0 && regular.length === 0) return null;
             return (
               <div key={day}>
                 <p className="text-sm font-medium text-gray-400 mb-2">{formatShortDay(day)}</p>
-                {sortByTime(dayEntries).map((entry) => (
+                {allDay.map((entry) => (
+                  <AllDayBanner key={entry.id} entry={entry} onOpen={onOpenEntry} />
+                ))}
+                {regular.map((entry) => (
                   <EntryPill key={entry.id} entry={entry} onOpen={onOpenEntry} onCheck={onCheckEntry} />
                 ))}
               </div>

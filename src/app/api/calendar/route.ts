@@ -16,22 +16,30 @@ export async function GET(request: NextRequest) {
           id,
           week_id,
           day::text,
+          end_day::text,
           time::text,
           category,
           title,
           notes,
           completed
         FROM calendar_entries
-        WHERE day >= ${from}::date AND day <= ${to}::date
+        WHERE (day >= ${from}::date AND day <= ${to}::date)
+           OR (end_day IS NOT NULL AND day < ${from}::date AND end_day >= ${from}::date)
         ORDER BY day, time NULLS LAST
       `;
     } else if (weekStart) {
       const week = await getOrCreateWeek(weekStart);
+      const weekEnd = (() => {
+        const d = new Date(weekStart + 'T00:00:00');
+        d.setDate(d.getDate() + 6);
+        return d.toISOString().split('T')[0];
+      })();
       entries = await sql`
         SELECT
           id,
           week_id,
           day::text,
+          end_day::text,
           time::text,
           category,
           title,
@@ -39,6 +47,7 @@ export async function GET(request: NextRequest) {
           completed
         FROM calendar_entries
         WHERE week_id = ${week.id}
+           OR (end_day IS NOT NULL AND day < ${weekStart}::date AND end_day >= ${weekStart}::date)
         ORDER BY day, time NULLS LAST
       `;
     } else {

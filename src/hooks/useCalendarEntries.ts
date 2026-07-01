@@ -9,7 +9,16 @@ export function useCalendarEntries(initialEntries: CalendarEntry[] = []) {
   const entriesByDay = useMemo(
     () =>
       entries.reduce<Record<string, CalendarEntry[]>>((acc, e) => {
-        (acc[e.day] ??= []).push(e);
+        if (e.end_day && e.end_day > e.day) {
+          const start = new Date(e.day + 'T00:00:00');
+          const end = new Date(e.end_day + 'T00:00:00');
+          for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const ds = d.toISOString().split('T')[0];
+            (acc[ds] ??= []).push(e);
+          }
+        } else {
+          (acc[e.day] ??= []).push(e);
+        }
         return acc;
       }, {}),
     [entries],

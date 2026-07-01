@@ -19,6 +19,7 @@ export interface CalendarEntry {
   id: string;
   week_id: string;
   day: string;
+  end_day: string | null;
   time: string | null;
   category: Category;
   title: string;
@@ -65,6 +66,38 @@ export const CATEGORY_DOT: Record<Category, string> = {
   social: 'bg-pink-500',
   event: 'bg-purple-500',
   task: 'bg-blue-500',
+};
+
+export const CATEGORY_ALLDAY_BG: Record<Category, string> = {
+  exercise: 'bg-green-50 border-green-100',
+  food: 'bg-amber-50 border-amber-100',
+  social: 'bg-pink-50 border-pink-100',
+  event: 'bg-purple-50 border-purple-100',
+  task: 'bg-blue-50 border-blue-100',
+};
+
+export const CATEGORY_ALLDAY_TEXT: Record<Category, string> = {
+  exercise: 'text-green-900',
+  food: 'text-amber-900',
+  social: 'text-pink-900',
+  event: 'text-purple-900',
+  task: 'text-blue-900',
+};
+
+export const CATEGORY_ALLDAY_MUTED: Record<Category, string> = {
+  exercise: 'text-green-500',
+  food: 'text-amber-500',
+  social: 'text-pink-500',
+  event: 'text-purple-500',
+  task: 'text-blue-500',
+};
+
+export const CATEGORY_ALLDAY_BAR: Record<Category, string> = {
+  exercise: 'bg-green-100',
+  food: 'bg-amber-100',
+  social: 'bg-pink-100',
+  event: 'bg-purple-100',
+  task: 'bg-blue-100',
 };
 
 export interface FixedExpense {
