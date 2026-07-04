@@ -31,6 +31,8 @@ Run `psql $DATABASE_URL -f src/db/schema.sql` once to set up the DB (or paste th
 
 See `DECISIONS.md` for deliberate product decisions (navigation structure, no-auth choice, etc.) that should not be reversed without checking there first.
 
+When a task establishes a new deliberate decision (a product/architecture choice, or a "don't do X, we tried it, here's why" fix) — add it to `DECISIONS.md` rather than leaving it implicit in a commit message. Keep entries short: what was decided, and the concrete reason. Also fix any entry there that's gone stale (e.g. describes a nav/model/route setup that's since changed) instead of leaving it to mislead the next session.
+
 ## Architecture
 
 **Single-user personal PWA.** No auth. One `user_profile` row in the DB holds a freeform markdown text block that Claude reads on every AI call and can write back to after a planning session.

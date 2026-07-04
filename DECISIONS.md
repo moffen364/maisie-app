@@ -7,10 +7,13 @@ Decisions made during the creation of this app, so future Claude sessions don't 
 ## Navigation
 
 **Finance replaced the Nudges tab.**
-The bottom nav has: Week | Year | + | Plan | Finance. There is no Nudges tab. Nudges are a notification mechanism only — they appear as a dismissible banner on the main page (`activeNudge` in `page.tsx`). The `/nudges` page and `NudgeItem` component have been deleted — do not recreate them.
+The bottom nav has: Week | Year | + | To-Dos | Finance. There is no Nudges tab. Nudges are a notification mechanism only — they appear as a dismissible banner on the main page (`activeNudge` in `page.tsx`). The `/nudges` page and `NudgeItem` component have been deleted — do not recreate them.
 
 **QuickAdd is not a page — it's a sheet.**
 The `+` button in the bottom nav opens `QuickAddSheet` as a modal bottom sheet. `BottomNav` owns this modal state.
+
+**Plan lives inside the + sheet, not the bottom nav.**
+`QuickAddSheet` has a "Plan my week" option that routes to `/plan`. Plan used to occupy a nav slot directly; that slot was replaced by To-Dos. Don't move Plan back into the bottom nav without checking why it was moved out.
 
 ---
 
@@ -42,13 +45,16 @@ Uses `@import "tailwindcss"` in `globals.css`. There is no `tailwind.config.js/t
 **All Claude calls are server-side only.**
 The Anthropic API key must never reach the client. All AI calls go through API routes under `src/app/api/`.
 
-**Model: `claude-sonnet-4-6`.**
-Used consistently across all API routes.
+**Two model tiers, not one.**
+`src/lib/models.ts` exports `AI_MODEL` (Haiku — simple/cheap classification tasks) and `AI_MODEL_SMART` (`claude-sonnet-4-6` — planning, review, natural-language parsing). Both are env-overridable. Don't collapse back to a single model without checking why routes were split.
 
 **The chat route (`/api/plan/chat`) streams; all others are non-streaming.**
 
 **Section prompts live in `src/prompts/[section].ts`.**
 Changing a prompt takes effect on next deploy. No DB involvement.
+
+**Plan confirm is additive, never destructive, toward existing calendar data.**
+`POST /api/plan/confirm` used to `DELETE` all `calendar_entries`/`todos` for the week before inserting the AI-proposed ones. This wiped manually added (e.g. quick-add) entries, since the review flow only ever returns *new* entries, not the full set. Confirm now only inserts, skipping exact day+title duplicates — it must never delete existing rows for the week. The review/generation prompts are given existing entries as context specifically so they can judge what's already covered instead of re-proposing it.
 
 ---
 
