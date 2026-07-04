@@ -28,6 +28,7 @@ interface ReviewData {
   proposedWeek: ProposedDay[];
   calendarEntries: CalendarEntry[];
   todos: Todo[];
+  groceryItems: string[];
 }
 
 function ReviewContent() {
@@ -59,7 +60,7 @@ function ReviewContent() {
         return r.json();
       })
       .then((data: ReviewData) => {
-        setReview(data);
+        setReview({ ...data, groceryItems: data.groceryItems ?? [] });
       })
       .catch(() => {
         setError('Could not generate your review. Please try again.');
@@ -104,6 +105,12 @@ function ReviewContent() {
     }
   }
 
+  function handleRemoveGroceryItem(index: number) {
+    setReview((prev) =>
+      prev ? { ...prev, groceryItems: prev.groceryItems.filter((_, i) => i !== index) } : prev,
+    );
+  }
+
   async function handleConfirm() {
     if (confirming || !review) return;
     setConfirming(true);
@@ -115,6 +122,7 @@ function ReviewContent() {
           weekStart,
           calendarEntries: review.calendarEntries,
           todos: review.todos,
+          groceryItems: review.groceryItems,
         }),
       });
       if (!res.ok) throw new Error('Confirm failed');
@@ -279,6 +287,33 @@ function ReviewContent() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Grocery list */}
+      {review.groceryItems.length > 0 && (
+        <div className="mx-4 mt-3 bg-white border border-pink-100 rounded-2xl p-4">
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">Grocery list</h2>
+          <ul className="flex flex-col gap-1.5">
+            {review.groceryItems.map((item, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 text-sm text-gray-700">
+                <span className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-teal-500 flex-shrink-0" />
+                  {item}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveGroceryItem(i)}
+                  aria-label={`Remove ${item}`}
+                  className="text-gray-300 hover:text-gray-500 p-1 -mr-1"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

@@ -83,3 +83,26 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 -- Seed an empty finance profile row
 INSERT INTO finance_profile (monthly_take_home, fixed_expenses) VALUES (0, '[]') ON CONFLICT DO NOTHING;
+
+-- Not week-scoped, unlike every other table above — a grocery list or wishlist
+-- persists past Sunday, it has no "week". See DECISIONS.md.
+CREATE TABLE IF NOT EXISTS lists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS list_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  list_id UUID NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  completed BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Seed the three default lists
+INSERT INTO lists (name, color, sort_order)
+SELECT * FROM (VALUES ('Grocery', 'teal', 0), ('Top Ups', 'rose', 1), ('Wishlist', 'purple', 2)) AS v(name, color, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM lists);

@@ -180,6 +180,33 @@ export const FINANCE_CATEGORIES: FinanceCategory[] = [
   'shopping', 'subscriptions', 'expenses', 'groceries', 'income',
 ];
 
+export interface List {
+  id: string;
+  name: string;
+  color: ListColor;
+  sort_order: number;
+}
+
+export interface ListItem {
+  id: string;
+  list_id: string;
+  title: string;
+  completed: boolean;
+}
+
+export type ListColor = 'teal' | 'rose' | 'purple' | 'amber' | 'sky' | 'indigo';
+
+export const LIST_PALETTE: Record<ListColor, { dot: string; activeBg: string }> = {
+  teal: { dot: 'bg-teal-500', activeBg: 'bg-teal-100 text-teal-800 border-teal-200' },
+  rose: { dot: 'bg-rose-500', activeBg: 'bg-rose-100 text-rose-800 border-rose-200' },
+  purple: { dot: 'bg-purple-500', activeBg: 'bg-purple-100 text-purple-800 border-purple-200' },
+  amber: { dot: 'bg-amber-500', activeBg: 'bg-amber-100 text-amber-800 border-amber-200' },
+  sky: { dot: 'bg-sky-500', activeBg: 'bg-sky-100 text-sky-800 border-sky-200' },
+  indigo: { dot: 'bg-indigo-500', activeBg: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+};
+
+export const LIST_COLOR_ORDER: ListColor[] = ['teal', 'rose', 'purple', 'amber', 'sky', 'indigo'];
+
 export const PLAN_SECTIONS: { key: PlanSection; label: string; prompt: string }[] = [
   { key: 'exercise', label: 'Exercise', prompt: 'What movement do you want this week?' },
   { key: 'meals', label: 'Meals', prompt: 'What are you thinking for food this week?' },

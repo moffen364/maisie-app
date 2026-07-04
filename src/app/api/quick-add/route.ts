@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { getMondayOfWeek } from '@/lib/utils';
+import { LIST_COLOR_ORDER } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const week = await getOrCreateWeek(weekStart);
 
-    const [calendarRows, profile] = await Promise.all([
+    const [calendarRows, profile, lists, listItems] = await Promise.all([
       sql`
         SELECT day::text, time::text, category, title
         FROM calendar_entries
@@ -31,6 +32,8 @@ export async function POST(request: NextRequest) {
         ORDER BY day, time NULLS LAST
       `,
       getUserProfile(),
+      sql`SELECT id, name FROM lists ORDER BY sort_order`,
+      sql`SELECT list_id, title FROM list_items WHERE completed = false`,
     ]);
 
     const calendarSummary = calendarRows.length > 0
@@ -38,6 +41,15 @@ export async function POST(request: NextRequest) {
           .map(e => `${e.day} ${e.time ?? 'no time'}: ${e.category} — ${e.title}`)
           .join('\n')
       : 'No entries yet this week.';
+
+    const listsSummary = lists.length > 0
+      ? lists
+          .map((l) => {
+            const openItems = listItems.filter((i) => i.list_id === l.id).map((i) => i.title);
+            return `- ${l.name}: ${openItems.length > 0 ? openItems.join(', ') : '(empty)'}`;
+          })
+          .join('\n')
+      : 'No lists yet.';
 
     const systemPrompt = `You are a personal assistant for Maisie. Parse the following natural language input and return a JSON object.
 
@@ -47,7 +59,19 @@ ${profile || 'No profile yet.'}
 Current week's calendar:
 ${calendarSummary}
 
-Return a JSON object with these fields:
+Existing lists and their open (unchecked) items:
+${listsSummary}
+
+First, decide: is this adding one or more items to a list (e.g. groceries, top-ups, wishlist items — "add milk, eggs, and bread", "need more dog food"), or a calendar/task entry (an event, appointment, or to-do with a day)?
+
+If it's list items, return a JSON object with these fields:
+- isListItem: true
+- listName: string (match an existing list by name if it clearly fits, e.g. groceries/food items go to "Grocery"; otherwise pick a short sensible new list name)
+- items: string[] (one entry per item mentioned — split "milk, eggs, and bread" into 3 items)
+- message: string (a short confirmation, e.g. "Added milk, eggs, bread to Grocery")
+
+Otherwise, return a JSON object with these fields:
+- isListItem: false
 - title: string (concise title for the entry)
 - category: one of "exercise", "food", "social", "event", "task"
 - day: YYYY-MM-DD (start date — use context and "tomorrow", "Thursday", "24th August" etc to determine)
@@ -76,6 +100,9 @@ Respond with ONLY valid JSON, no markdown.`;
     }
 
     let data: {
+      isListItem?: boolean;
+      listName?: string;
+      items?: string[];
       title: string;
       category: string;
       day: string;
@@ -92,7 +119,31 @@ Respond with ONLY valid JSON, no markdown.`;
       return NextResponse.json({ error: 'Failed to parse Claude response' }, { status: 500 });
     }
 
-    if (data.isTask) {
+    if (data.isListItem) {
+      const items = (data.items ?? []).map((s) => s.trim()).filter(Boolean);
+      if (!data.listName || items.length === 0) {
+        return NextResponse.json({ error: 'Claude did not return list items' }, { status: 500 });
+      }
+
+      let list = lists.find((l) => l.name.toLowerCase() === data.listName!.trim().toLowerCase());
+      if (!list) {
+        const nextSortOrder = lists.length > 0 ? Math.max(...(await sql`SELECT sort_order FROM lists`).map((l) => l.sort_order)) + 1 : 0;
+        const nextColor = LIST_COLOR_ORDER[lists.length % LIST_COLOR_ORDER.length];
+        const [created] = await sql`
+          INSERT INTO lists (name, color, sort_order)
+          VALUES (${data.listName.trim()}, ${nextColor}, ${nextSortOrder})
+          RETURNING id, name
+        `;
+        list = created as { id: string; name: string };
+      }
+
+      for (const title of items) {
+        await sql`
+          INSERT INTO list_items (list_id, title, completed)
+          VALUES (${list.id}, ${title}, false)
+        `;
+      }
+    } else if (data.isTask) {
       await sql`
         INSERT INTO todos (week_id, title, due_day, completed)
         VALUES (${week.id}, ${data.title}, ${data.day ?? null}, false)

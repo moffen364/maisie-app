@@ -69,6 +69,12 @@ The Neon driver returns `date` and `time` columns as JS Date objects. Prevent th
 **All foreign keys go through `week_id → weeks.id`.**
 There is no direct user FK on entries/todos/nudges — everything is scoped to a week.
 
+**`lists`/`list_items` are the one exception — not week-scoped.**
+A grocery list or wishlist persists past Sunday; it has no "week" to belong to. These two tables have no `week_id` FK, unlike every other table. Three default lists (Grocery, Top Ups, Wishlist) are seeded by `schema.sql`.
+
+**The old single "Grocery shop" calendar task is gone.**
+`/plan/review` and `/plan/confirm` used to create one `calendar_entries` row (category `task`, title "Grocery shop") with the week's meal plan summarised in `notes`. That's been replaced by itemized `groceryItems` inserted directly into the Grocery list — meal planning now proposes actual grocery items instead of a single reminder task. Don't reintroduce the old single-task pattern.
+
 ---
 
 ## No test suite or linter configured.

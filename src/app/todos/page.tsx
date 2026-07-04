@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import type { Todo } from '@/lib/types';
 import { getMondayOfWeek } from '@/lib/utils';
 import CheckCircleButton from '@/components/CheckCircleButton';
+import SegmentedTabs from '@/components/SegmentedTabs';
+import ListsPanel from '@/components/ListsPanel';
 
 function TodoRow({
   todo,
@@ -28,6 +30,7 @@ function TodoRow({
 export default function TodosPage() {
   const weekStart = getMondayOfWeek();
 
+  const [tab, setTab] = useState<'todos' | 'lists'>('todos');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,16 +102,34 @@ export default function TodosPage() {
   return (
     <div className="font-sans pt-12 pb-28">
       {/* Header */}
-      <div className="px-4 mb-5">
-        <p className="text-xs font-medium text-pink-400 uppercase tracking-widest mb-0.5">This week</p>
+      <div className="px-4 mb-3">
         <h1 className="text-xl font-semibold text-gray-900">
           To-Dos
-          {!loading && active.length > 0 && (
+          {tab === 'todos' && !loading && active.length > 0 && (
             <span className="ml-2 text-sm font-normal text-gray-400">{active.length} left</span>
           )}
         </h1>
       </div>
 
+      <div className="px-4">
+        <SegmentedTabs
+          tabs={[
+            { key: 'todos', label: 'To-Dos' },
+            { key: 'lists', label: 'Lists' },
+          ]}
+          active={tab}
+          onChange={setTab}
+        />
+      </div>
+
+      {tab === 'lists' && (
+        <div className="mx-4">
+          <ListsPanel />
+        </div>
+      )}
+
+      {tab === 'todos' && (
+        <>
       {/* Inline add */}
       <div className="mx-4 mb-5">
         <div className="flex items-center gap-2 bg-white rounded-xl border border-pink-200 px-3 shadow-sm focus-within:ring-2 focus-within:ring-brand focus-within:border-transparent">
@@ -195,6 +216,8 @@ export default function TodosPage() {
               )}
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </div>

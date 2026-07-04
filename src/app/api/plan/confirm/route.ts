@@ -18,6 +18,7 @@ interface TodoInput {
 interface ReviewResult {
   calendarEntries: CalendarEntryInput[];
   todos: TodoInput[];
+  groceryItems: string[];
 }
 
 async function generateWeekPlan(
@@ -25,7 +26,7 @@ async function generateWeekPlan(
   weekId: string,
   profile: string
 ): Promise<ReviewResult> {
-  const [sectionInputs, existingEntries] = await Promise.all([
+  const [sectionInputs, existingEntries, groceryItemRows] = await Promise.all([
     sql`
       SELECT section, raw_input
       FROM section_inputs
@@ -37,6 +38,12 @@ async function generateWeekPlan(
       FROM calendar_entries
       WHERE week_id = ${weekId}
       ORDER BY day, time NULLS LAST
+    `,
+    sql`
+      SELECT list_items.title
+      FROM list_items
+      JOIN lists ON lists.id = list_items.list_id
+      WHERE lists.name = 'Grocery' AND list_items.completed = false
     `,
   ]);
 
@@ -52,6 +59,10 @@ async function generateWeekPlan(
         .join('\n')
     : 'None.';
 
+  const groceryItemsSummary = groceryItemRows.length > 0
+    ? groceryItemRows.map((r) => r.title).join(', ')
+    : 'None.';
+
   const systemPrompt = `You are a personal planning assistant for Maisie. Review her week plan and provide structured feedback.
 
 User profile:
@@ -63,13 +74,14 @@ Return a JSON object with:
 - positives: string[] (2-4 specific things that look good)
 - issues: string[] (specific problems, gaps, or overloads — be direct, e.g. "No meals planned Thursday or Friday", "Thursday looks overloaded")
 - proposedWeek: array of { day: "Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"|"Sunday", items: string[] } for all 7 days — include both existing and new entries
-- calendarEntries: array of { day: YYYY-MM-DD, time: string|null, category: "exercise"|"food"|"social"|"event"|"task", title: string, notes: string|null } — NEW entries to create only (do not duplicate already-existing ones). IMPORTANT: for the meals section, do NOT create individual breakfast/lunch/dinner events. Instead create ONE grocery reminder on the Sunday or Monday of the week (whichever is the planning night) with category "task", title "Grocery shop", and the weekly meal plan summarised in notes.
+- calendarEntries: array of { day: YYYY-MM-DD, time: string|null, category: "exercise"|"food"|"social"|"event"|"task", title: string, notes: string|null } — NEW entries to create only (do not duplicate already-existing ones). IMPORTANT: do NOT create individual breakfast/lunch/dinner events, and do NOT create a grocery shop reminder here — grocery items go in the separate "groceryItems" field below instead.
 - todos: array of { title: string, due_day: YYYY-MM-DD|null } — tasks and errands
+- groceryItems: string[] — NEW grocery items to buy this week, derived from the meals discussion. Do not repeat items already in "Already unchecked on the Grocery list" below.
 
 The week starts on ${weekStart}.
 Respond with ONLY valid JSON.`;
 
-  const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}\n\n## Already in my calendar this week\n${existingEntriesSummary}`;
+  const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}\n\n## Already in my calendar this week\n${existingEntriesSummary}\n\n## Already unchecked on the Grocery list\n${groceryItemsSummary}`;
 
   const response = await anthropic.messages.create({
     model: AI_MODEL,
@@ -89,7 +101,7 @@ Respond with ONLY valid JSON.`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { weekStart, calendarEntries: prebuiltEntries, todos: prebuiltTodos } = body;
+    const { weekStart, calendarEntries: prebuiltEntries, todos: prebuiltTodos, groceryItems: prebuiltGroceryItems } = body;
 
     if (!weekStart) {
       return NextResponse.json({ error: 'weekStart is required' }, { status: 400 });
@@ -102,13 +114,16 @@ export async function POST(request: NextRequest) {
     // otherwise fall back to generating via Claude
     let calendarEntries: CalendarEntryInput[];
     let todos: TodoInput[];
+    let groceryItems: string[];
     if (prebuiltEntries && prebuiltTodos) {
       calendarEntries = prebuiltEntries;
       todos = prebuiltTodos;
+      groceryItems = prebuiltGroceryItems ?? [];
     } else {
       const planData = await generateWeekPlan(weekStart, week.id, profile);
       calendarEntries = planData.calendarEntries ?? [];
       todos = planData.todos ?? [];
+      groceryItems = planData.groceryItems ?? [];
     }
 
     // These lists represent NEW entries only (the review/generation prompts are instructed
@@ -158,6 +173,24 @@ export async function POST(request: NextRequest) {
           false
         )
       `;
+    }
+
+    // Insert grocery items into the Grocery list, skipping anything already unchecked there
+    if (groceryItems.length > 0) {
+      const [groceryList] = await sql`SELECT id FROM lists WHERE name = 'Grocery' LIMIT 1`;
+      if (groceryList) {
+        const existingGroceryItems = await sql`
+          SELECT title FROM list_items WHERE list_id = ${groceryList.id} AND completed = false
+        `;
+        const existingGroceryKeys = new Set(existingGroceryItems.map((i) => normalize(i.title)));
+        for (const title of groceryItems) {
+          if (existingGroceryKeys.has(normalize(title))) continue;
+          await sql`
+            INSERT INTO list_items (list_id, title, completed)
+            VALUES (${groceryList.id}, ${title}, false)
+          `;
+        }
+      }
     }
 
     // Fetch all section inputs for profile update
