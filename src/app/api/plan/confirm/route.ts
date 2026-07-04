@@ -25,12 +25,20 @@ async function generateWeekPlan(
   weekId: string,
   profile: string
 ): Promise<ReviewResult> {
-  const sectionInputs = await sql`
-    SELECT section, raw_input
-    FROM section_inputs
-    WHERE week_id = ${weekId}
-    ORDER BY section
-  `;
+  const [sectionInputs, existingEntries] = await Promise.all([
+    sql`
+      SELECT section, raw_input
+      FROM section_inputs
+      WHERE week_id = ${weekId}
+      ORDER BY section
+    `,
+    sql`
+      SELECT day::text, time::text, category, title, notes
+      FROM calendar_entries
+      WHERE week_id = ${weekId}
+      ORDER BY day, time NULLS LAST
+    `,
+  ]);
 
   const inputsSummary = sectionInputs.length > 0
     ? sectionInputs
@@ -38,22 +46,30 @@ async function generateWeekPlan(
         .join('\n\n')
     : 'No planning inputs yet.';
 
+  const existingEntriesSummary = existingEntries.length > 0
+    ? existingEntries
+        .map((e) => `- ${e.day}${e.time ? ` at ${e.time}` : ''} [${e.category}] ${e.title}${e.notes ? ` (${e.notes})` : ''}`)
+        .join('\n')
+    : 'None.';
+
   const systemPrompt = `You are a personal planning assistant for Maisie. Review her week plan and provide structured feedback.
 
 User profile:
 ${profile || 'No profile yet.'}
 
+IMPORTANT: The user's message includes a section "Already in my calendar this week" — these entries already exist in the calendar. Do NOT re-add them to calendarEntries (they are already saved), and take them into account when identifying gaps or overloads.
+
 Return a JSON object with:
 - positives: string[] (2-4 specific things that look good)
 - issues: string[] (specific problems, gaps, or overloads — be direct, e.g. "No meals planned Thursday or Friday", "Thursday looks overloaded")
-- proposedWeek: array of { day: "Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"|"Sunday", items: string[] } for all 7 days
-- calendarEntries: array of { day: YYYY-MM-DD, time: string|null, category: "exercise"|"food"|"social"|"event"|"task", title: string, notes: string|null } — the actual entries to create. IMPORTANT: for the meals section, do NOT create individual breakfast/lunch/dinner events. Instead create ONE grocery reminder on the Sunday or Monday of the week (whichever is the planning night) with category "task", title "Grocery shop", and the weekly meal plan summarised in notes.
+- proposedWeek: array of { day: "Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"|"Sunday", items: string[] } for all 7 days — include both existing and new entries
+- calendarEntries: array of { day: YYYY-MM-DD, time: string|null, category: "exercise"|"food"|"social"|"event"|"task", title: string, notes: string|null } — NEW entries to create only (do not duplicate already-existing ones). IMPORTANT: for the meals section, do NOT create individual breakfast/lunch/dinner events. Instead create ONE grocery reminder on the Sunday or Monday of the week (whichever is the planning night) with category "task", title "Grocery shop", and the weekly meal plan summarised in notes.
 - todos: array of { title: string, due_day: YYYY-MM-DD|null } — tasks and errands
 
 The week starts on ${weekStart}.
 Respond with ONLY valid JSON.`;
 
-  const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}`;
+  const userMessage = `Here are my planning notes for this week:\n\n${inputsSummary}\n\n## Already in my calendar this week\n${existingEntriesSummary}`;
 
   const response = await anthropic.messages.create({
     model: AI_MODEL,
@@ -95,12 +111,26 @@ export async function POST(request: NextRequest) {
       todos = planData.todos ?? [];
     }
 
-    // Clean slate: delete existing entries for this week
-    await sql`DELETE FROM calendar_entries WHERE week_id = ${week.id}`;
-    await sql`DELETE FROM todos WHERE week_id = ${week.id}`;
+    // These lists represent NEW entries only (the review/generation prompts are instructed
+    // not to re-propose what's already on the calendar) — never wipe existing entries here,
+    // since that would also delete manually added (e.g. quick-add) items untouched by planning.
+    const [existingEntries, existingTodos] = await Promise.all([
+      sql`SELECT day::text, title FROM calendar_entries WHERE week_id = ${week.id}`,
+      sql`SELECT due_day::text, title FROM todos WHERE week_id = ${week.id}`,
+    ]);
 
-    // Insert calendar entries
+    const normalize = (s: string) => s.trim().toLowerCase();
+    const existingEntryKeys = new Set(
+      existingEntries.map((e) => `${e.day}|${normalize(e.title)}`)
+    );
+    const existingTodoKeys = new Set(
+      existingTodos.map((t) => `${t.due_day ?? ''}|${normalize(t.title)}`)
+    );
+
+    // Insert calendar entries, skipping anything that already exists on the same day
     for (const entry of calendarEntries) {
+      const key = `${entry.day}|${normalize(entry.title)}`;
+      if (existingEntryKeys.has(key)) continue;
       await sql`
         INSERT INTO calendar_entries (week_id, day, time, category, title, notes, completed)
         VALUES (
@@ -115,8 +145,10 @@ export async function POST(request: NextRequest) {
       `;
     }
 
-    // Insert todos
+    // Insert todos, skipping anything that already exists with the same due day
     for (const todo of todos) {
+      const key = `${todo.due_day ?? ''}|${normalize(todo.title)}`;
+      if (existingTodoKeys.has(key)) continue;
       await sql`
         INSERT INTO todos (week_id, title, due_day, completed)
         VALUES (
