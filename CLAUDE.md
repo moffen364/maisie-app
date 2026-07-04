@@ -12,6 +12,10 @@ npx tsc --noEmit  # type-check without building
 
 No test suite or linter configured.
 
+## Git workflow
+
+After completing a task, commit related changes together in a single logical commit. Group by feature or fix — don't commit file-by-file. Use `git add <specific files>` rather than `git add -A`.
+
 ## Environment
 
 Requires `.env.local` with:
