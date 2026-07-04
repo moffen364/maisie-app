@@ -1,9 +1,18 @@
+// Formats a Date as YYYY-MM-DD using its local calendar fields (not toISOString,
+// which converts to UTC and shifts the date for any non-UTC timezone).
+export function toDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function getMondayOfWeek(date: Date = new Date()): string {
   const d = new Date(date);
-  const day = d.getUTCDay();
+  const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  return d.toISOString().split('T')[0];
+  d.setDate(d.getDate() + diff);
+  return toDateStr(d);
 }
 
 export function formatDay(dateStr: string): string {
@@ -26,7 +35,7 @@ export function formatTime(timeStr: string | null): string {
 }
 
 export function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return toDateStr(new Date());
 }
 
 export function sortByTime<T extends { time: string | null }>(entries: T[]): T[] {
@@ -63,7 +72,7 @@ export function getWeekDays(mondayStr: string): string[] {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    result.push(d.toISOString().split('T')[0]);
+    result.push(toDateStr(d));
   }
   return result;
 }

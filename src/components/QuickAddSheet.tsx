@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/Spinner';
 import { useModalTransition } from '@/hooks/useModalTransition';
@@ -20,15 +20,15 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    if (open) {
-      const t = setTimeout(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.select();
-      }, 50);
-      return () => clearTimeout(t);
+  // Focus synchronously on mount (not via setTimeout) so this stays inside the
+  // same task as the tap that opened the sheet — mobile browsers only raise the
+  // on-screen keyboard for a programmatic focus() if it's tied to the user gesture.
+  useLayoutEffect(() => {
+    if (mounted) {
+      textareaRef.current?.focus();
+      textareaRef.current?.select();
     }
-  }, [open]);
+  }, [mounted]);
 
   useEffect(() => {
     if (!mounted) {

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { CalendarEntry } from '@/lib/types';
+import { toDateStr } from '@/lib/utils';
 
 export function useCalendarEntries(initialEntries: CalendarEntry[] = []) {
   const [entries, setEntries] = useState<CalendarEntry[]>(initialEntries);
@@ -13,7 +14,7 @@ export function useCalendarEntries(initialEntries: CalendarEntry[] = []) {
           const start = new Date(e.day + 'T00:00:00');
           const end = new Date(e.end_day + 'T00:00:00');
           for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const ds = d.toISOString().split('T')[0];
+            const ds = toDateStr(d);
             (acc[ds] ??= []).push(e);
           }
         } else {
