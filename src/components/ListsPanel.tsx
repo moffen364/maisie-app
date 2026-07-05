@@ -8,9 +8,11 @@ import CheckCircleButton from '@/components/CheckCircleButton';
 function ListItemRow({
   item,
   onCheck,
+  onDelete,
 }: {
   item: ListItem;
   onCheck: (id: string, completed: boolean) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-pink-100 shadow-sm mb-1.5">
@@ -21,6 +23,16 @@ function ListItemRow({
       <span className={`flex-1 text-sm ${item.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
         {item.title}
       </span>
+      <button
+        onClick={() => onDelete(item.id)}
+        className="text-gray-300 hover:text-red-400 flex-shrink-0 transition-colors"
+        aria-label={`Delete ${item.title}`}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
     </div>
   );
 }
@@ -37,8 +49,19 @@ export default function ListsPanel() {
   const [adding, setAdding] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmDeleteListId, setConfirmDeleteListId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const newListInputRef = useRef<HTMLInputElement>(null);
+  const confirmClearTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confirmDeleteListTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (confirmClearTimeout.current) clearTimeout(confirmClearTimeout.current);
+      if (confirmDeleteListTimeout.current) clearTimeout(confirmDeleteListTimeout.current);
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchLists() {
@@ -85,6 +108,10 @@ export default function ListsPanel() {
     const optimistic: ListItem = { id: optimisticId, list_id: activeListId, title, completed: false };
     setItems((prev) => [...prev, optimistic]);
     setAddInput('');
+    // Clear the DOM value synchronously too: a fast Enter-Enter-Enter can otherwise
+    // land the next keystrokes in the input before React's state clear re-renders it,
+    // concatenating the next item's text onto this one.
+    if (inputRef.current) inputRef.current.value = '';
     try {
       const res = await fetch('/api/lists/items', {
         method: 'POST',
@@ -100,6 +127,18 @@ export default function ListsPanel() {
     } finally {
       setAdding(false);
       inputRef.current?.focus();
+    }
+  }
+
+  async function handleDeleteItem(id: string) {
+    const prevItems = items;
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    try {
+      const res = await fetch(`/api/lists/items?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+    } catch {
+      setItems(prevItems);
+      setError('Could not delete item.');
     }
   }
 
@@ -138,6 +177,48 @@ export default function ListsPanel() {
     }
   }
 
+  function handleClearClick() {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      if (confirmClearTimeout.current) clearTimeout(confirmClearTimeout.current);
+      confirmClearTimeout.current = setTimeout(() => setConfirmClear(false), 2500);
+      return;
+    }
+    if (confirmClearTimeout.current) clearTimeout(confirmClearTimeout.current);
+    setConfirmClear(false);
+    handleClearChecked();
+  }
+
+  async function handleDeleteList(id: string) {
+    const prevLists = lists;
+    const prevItems = items;
+    const remaining = lists.filter((l) => l.id !== id);
+    setLists(remaining);
+    setItems((prev) => prev.filter((i) => i.list_id !== id));
+    if (activeListId === id) setActiveListId(remaining[0]?.id ?? null);
+    try {
+      const res = await fetch(`/api/lists?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+    } catch {
+      setLists(prevLists);
+      setItems(prevItems);
+      setActiveListId(id);
+      setError('Could not delete list.');
+    }
+  }
+
+  function handleDeleteListClick(id: string) {
+    if (confirmDeleteListId !== id) {
+      setConfirmDeleteListId(id);
+      if (confirmDeleteListTimeout.current) clearTimeout(confirmDeleteListTimeout.current);
+      confirmDeleteListTimeout.current = setTimeout(() => setConfirmDeleteListId(null), 2500);
+      return;
+    }
+    if (confirmDeleteListTimeout.current) clearTimeout(confirmDeleteListTimeout.current);
+    setConfirmDeleteListId(null);
+    handleDeleteList(id);
+  }
+
   const activeItems = items.filter((i) => i.list_id === activeListId);
   const active = activeItems.filter((i) => !i.completed);
   const done = activeItems.filter((i) => i.completed);
@@ -160,16 +241,44 @@ export default function ListsPanel() {
         {lists.map((list) => {
           const palette = LIST_PALETTE[list.color];
           const isActive = list.id === activeListId;
+          const confirmingDelete = confirmDeleteListId === list.id;
+
+          if (!isActive) {
+            return (
+              <button
+                key={list.id}
+                onClick={() => setActiveListId(list.id)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors bg-white text-gray-500 border-gray-200"
+              >
+                {list.name}
+              </button>
+            );
+          }
+
           return (
-            <button
-              key={list.id}
-              onClick={() => setActiveListId(list.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                isActive ? palette.activeBg : 'bg-white text-gray-500 border-gray-200'
-              }`}
-            >
-              {list.name}
-            </button>
+            <div key={list.id} className={`flex items-center gap-1 pl-3 pr-1.5 py-1.5 rounded-full text-sm font-medium ${palette.activeBg}`}>
+              <button onClick={() => setActiveListId(list.id)} className="max-w-[9rem] truncate">
+                {list.name}
+              </button>
+              <button
+                onClick={() => handleDeleteListClick(list.id)}
+                aria-label={confirmingDelete ? `Confirm delete ${list.name}` : `Delete ${list.name}`}
+                className={`shrink-0 rounded-full transition-colors ${
+                  confirmingDelete
+                    ? 'px-1.5 text-[11px] font-semibold text-red-600 bg-white/70'
+                    : 'w-5 h-5 flex items-center justify-center opacity-50 hover:opacity-90'
+                }`}
+              >
+                {confirmingDelete ? (
+                  'Delete?'
+                ) : (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                )}
+              </button>
+            </div>
           );
         })}
         {addingList ? (
@@ -262,7 +371,7 @@ export default function ListsPanel() {
               <p className="text-xs text-gray-300 mt-0.5">Use the field above to add items</p>
             </div>
           ) : (
-            active.map((item) => <ListItemRow key={item.id} item={item} onCheck={handleCheck} />)
+            active.map((item) => <ListItemRow key={item.id} item={item} onCheck={handleCheck} onDelete={handleDeleteItem} />)
           )}
 
           {/* Checked section */}
@@ -285,14 +394,14 @@ export default function ListsPanel() {
                 <div className="mt-2">
                   <div className="flex justify-end mb-1.5">
                     <button
-                      onClick={handleClearChecked}
+                      onClick={handleClearClick}
                       disabled={clearing}
-                      className="text-xs font-semibold text-pink-500 disabled:opacity-40"
+                      className={`text-xs font-semibold disabled:opacity-40 transition-colors ${confirmClear ? 'text-red-500' : 'text-pink-500'}`}
                     >
-                      Clear
+                      {confirmClear ? 'Tap to confirm' : 'Clear'}
                     </button>
                   </div>
-                  {done.map((item) => <ListItemRow key={item.id} item={item} onCheck={handleCheck} />)}
+                  {done.map((item) => <ListItemRow key={item.id} item={item} onCheck={handleCheck} onDelete={handleDeleteItem} />)}
                 </div>
               )}
             </div>

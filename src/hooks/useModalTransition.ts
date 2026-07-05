@@ -8,8 +8,19 @@ export function useModalTransition(active: boolean, exitDelayMs = 300) {
   useEffect(() => {
     if (active) {
       setMounted(true);
-      const frame = requestAnimationFrame(() => requestAnimationFrame(() => setShow(true)));
-      return () => cancelAnimationFrame(frame);
+      // Fallback timer guards against a stalled rAF chain (e.g. a tab that was
+      // backgrounded the instant it opened) leaving the modal mounted but invisible.
+      const fallback = setTimeout(() => setShow(true), 100);
+      const frame = requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          clearTimeout(fallback);
+          setShow(true);
+        })
+      );
+      return () => {
+        cancelAnimationFrame(frame);
+        clearTimeout(fallback);
+      };
     } else {
       setShow(false);
       const t = setTimeout(() => setMounted(false), exitDelayMs);

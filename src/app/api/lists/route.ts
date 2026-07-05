@@ -41,3 +41,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const id = request.nextUrl.searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // list_items.list_id has ON DELETE CASCADE, so this also removes the list's items.
+    await sql`DELETE FROM lists WHERE id = ${id}`;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[DELETE /api/lists]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

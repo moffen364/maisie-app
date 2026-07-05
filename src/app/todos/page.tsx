@@ -78,6 +78,10 @@ export default function TodosPage() {
     const optimistic: Todo = { id: optimisticId, week_id: '', title, due_day: null, completed: false };
     setTodos((prev) => [...prev, optimistic]);
     setAddInput('');
+    // Clear the DOM value synchronously too: a fast Enter-Enter-Enter can otherwise
+    // land the next keystrokes in the input before React's state clear re-renders it,
+    // concatenating the next item's text onto this one.
+    if (inputRef.current) inputRef.current.value = '';
     try {
       const res = await fetch('/api/todos', {
         method: 'POST',

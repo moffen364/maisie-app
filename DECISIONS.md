@@ -38,6 +38,9 @@ Uses `@import "tailwindcss"` in `globals.css`. There is no `tailwind.config.js/t
 **All interactive components are client components.**
 `'use client'` on every component that uses state or effects. No server components below the layout.
 
+**Destructive actions use an inline two-tap confirm, never `window.confirm()`.**
+Deleting a list or bulk-clearing checked items in `ListsPanel.tsx` requires tapping the same button twice within ~2.5s (first tap swaps the label to "Delete?"/"Tap to confirm", second tap executes; it auto-reverts if not confirmed). This was chosen over a native browser dialog to keep the "gentle" brand feel and avoid a jarring modal for a personal, low-stakes app. Follow this pattern for any new destructive action rather than introducing native `confirm()` or a full modal.
+
 ---
 
 ## AI / Claude
