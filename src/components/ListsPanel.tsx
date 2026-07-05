@@ -55,6 +55,11 @@ export default function ListsPanel() {
   const newListInputRef = useRef<HTMLInputElement>(null);
   const confirmClearTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmDeleteListTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards against double-submitting a new list: Enter and the blur that follows
+  // it (as the input unmounts) can otherwise both fire, and blur must still save
+  // when it's the *only* thing that fired (e.g. tapping away to dismiss a mobile
+  // keyboard instead of pressing Enter).
+  const addListHandledRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -140,6 +145,12 @@ export default function ListsPanel() {
       setItems(prevItems);
       setError('Could not delete item.');
     }
+  }
+
+  function submitAddList() {
+    if (addListHandledRef.current) return;
+    addListHandledRef.current = true;
+    handleAddList();
   }
 
   async function handleAddList() {
@@ -290,23 +301,29 @@ export default function ListsPanel() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                handleAddList();
+                submitAddList();
               }
               if (e.key === 'Escape') {
+                addListHandledRef.current = true;
                 setAddingList(false);
                 setNewListName('');
               }
             }}
             onBlur={() => {
-              setAddingList(false);
-              setNewListName('');
+              // Tapping elsewhere to dismiss the mobile keyboard blurs this input —
+              // treat that as "save what I typed", not "discard it", unless Enter
+              // or Escape already handled this submission.
+              submitAddList();
             }}
             placeholder="List name"
             className="px-3 py-1.5 rounded-full text-sm border border-pink-200 focus:outline-none focus:ring-2 focus:ring-brand w-28"
           />
         ) : (
           <button
-            onClick={() => setAddingList(true)}
+            onClick={() => {
+              addListHandledRef.current = false;
+              setAddingList(true);
+            }}
             className="w-8 h-8 flex items-center justify-center rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
             aria-label="Add list"
           >
