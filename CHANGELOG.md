@@ -4,6 +4,22 @@ Personal life planning app — release history.
 
 ---
 
+## 5 July 2026
+
+### ✨ New
+- **Lists** — a new tab next to To-Dos for persistent lists that aren't tied to a week: Grocery, Top Ups, and Wishlist come built in, and you can add your own. Quick-add now recognises list items too (e.g. "add milk, eggs, and bread"), and Sunday meal planning proposes itemized grocery items straight into the Grocery list instead of one generic "Grocery shop" reminder.
+- **Delete and undo in Lists** — remove a single item, delete a whole list, or clear all checked items. Deleting a list or clearing checked items now needs a confirming second tap first, so a stray tap can't wipe anything by accident.
+
+### 🐛 Fixed
+- **New list names could vanish without saving** — tapping away to dismiss the keyboard after typing a new list name (the natural thing to do on a phone) discarded it silently instead of saving it. It now saves the same way pressing Enter does.
+- **Typing quickly into Lists or To-Dos could merge two entries into one** — adding items in fast succession (e.g. "Milk", "Eggs", one after another) could occasionally concatenate one item's text onto the next. Fixed by clearing the input immediately rather than waiting on a render.
+- **"Plan my week" could wipe manually added entries** — confirming a Sunday plan used to delete all of that week's calendar entries and todos before re-inserting the AI-proposed ones, destroying anything added via quick-add in between. It now only inserts, skipping exact duplicates.
+- **Multi-day events and the week view could land on the wrong day** — a timezone bug in date handling silently shifted dates back a day for anyone ahead of UTC (i.e. Australia), which could drop Sunday from the week view and split a multi-day event's highlight bar across the wrong days.
+- **Quick Add didn't reliably open the keyboard on mobile** — the text field's auto-focus was deferred in a way mobile browsers don't treat as a real tap, so the keyboard sometimes wouldn't appear. It now focuses synchronously when the sheet opens.
+- The Quick Add "+" sheet could, in rare cases, mount without ever becoming visible if its opening animation stalled (e.g. switching apps mid-tap).
+
+---
+
 ## 1 July 2026
 
 ### 🐛 Fixed
