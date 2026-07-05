@@ -7,13 +7,22 @@ Decisions made during the creation of this app, so future Claude sessions don't 
 ## Navigation
 
 **Finance replaced the Nudges tab.**
-The bottom nav has: Week | Year | + | To-Dos | Finance. There is no Nudges tab. Nudges are a notification mechanism only — they appear as a dismissible banner on the main page (`activeNudge` in `page.tsx`). The `/nudges` page and `NudgeItem` component have been deleted — do not recreate them.
+There is no Nudges tab. Nudges are a notification mechanism only — they appear as a dismissible banner on the main page (`activeNudge` in `page.tsx`). The `/nudges` page and `NudgeItem` component have been deleted — do not recreate them.
 
 **QuickAdd is not a page — it's a sheet.**
-The `+` button in the bottom nav opens `QuickAddSheet` as a modal bottom sheet. `BottomNav` owns this modal state.
+`QuickAddSheet` opens as a modal bottom sheet, triggered from the floating action button (see below). It no longer has an internal tab bar — it's always just the add textarea, scoped to `targetDate` when opened from a specific day.
 
-**Plan lives inside the + sheet, not the bottom nav.**
-`QuickAddSheet` has a "Plan my week" option that routes to `/plan`. Plan used to occupy a nav slot directly; that slot was replaced by To-Dos. Don't move Plan back into the bottom nav without checking why it was moved out.
+**The bottom nav is 5 even tabs, no floating button in the row: Week | Year | Plan | To-Dos | Finance.**
+Superseded: the nav used to have a raised inline `+` button in the center slot that opened `QuickAddSheet`, and Plan lived only inside that sheet as a second tab ("Plan my week"). Both changed in the FAB redesign below — **Plan now has its own nav tab**, deliberately reversing the earlier decision that pulled it out to make room for To-Dos. If a future session is tempted to move Plan again, check this file's git history for why, twice.
+
+**Quick Add and Lists moved to a floating action button (FAB), not the nav row.**
+`FloatingActionButton.tsx` renders a pink circular button fixed to the bottom-right of the screen, above the nav bar (`--fab-clear` in `globals.css` controls the clearance, safe-area aware). Behavior is route-dependent:
+- On `/` and `/week`: single tap opens `QuickAddSheet` directly. No fan-out.
+- On `/plan` and `/finance` (and subroutes): the FAB doesn't render at all — both pages already have their own primary action, so a FAB there would be redundant.
+- On `/todos`: tapping the FAB fans out into two labeled mini-actions ("Quick Add" and "Lists"/"To-Dos") with a dimming scrim behind them, Google Calendar-speed-dial style. This is the *only* place the FAB expands.
+
+**`/todos` no longer has a top segmented tab bar for To-Dos/Lists.**
+That switch is now driven entirely by the FAB's "Lists" mini-action, tracked via the `?view=lists` search param on `/todos` (so back/reload preserve it). The old `SegmentedTabs` component is deleted — don't recreate a top tab bar for this; the FAB is the intended, only way to switch. If a new segmented-tab need comes up elsewhere, it's fine to rebuild the component then, but this specific switch was moved on purpose.
 
 ---
 

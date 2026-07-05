@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Todo } from '@/lib/types';
 import { getMondayOfWeek } from '@/lib/utils';
 import CheckCircleButton from '@/components/CheckCircleButton';
-import SegmentedTabs from '@/components/SegmentedTabs';
 import ListsPanel from '@/components/ListsPanel';
 
 function TodoRow({
@@ -28,9 +28,18 @@ function TodoRow({
 }
 
 export default function TodosPage() {
-  const weekStart = getMondayOfWeek();
+  return (
+    <Suspense fallback={null}>
+      <TodosContent />
+    </Suspense>
+  );
+}
 
-  const [tab, setTab] = useState<'todos' | 'lists'>('todos');
+function TodosContent() {
+  const weekStart = getMondayOfWeek();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('view') === 'lists' ? 'lists' : 'todos';
+
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,22 +117,11 @@ export default function TodosPage() {
       {/* Header */}
       <div className="px-4 mb-3">
         <h1 className="text-xl font-semibold text-gray-900">
-          To-Dos
+          {tab === 'lists' ? 'Lists' : 'To-Dos'}
           {tab === 'todos' && !loading && active.length > 0 && (
             <span className="ml-2 text-sm font-normal text-gray-400">{active.length} left</span>
           )}
         </h1>
-      </div>
-
-      <div className="px-4">
-        <SegmentedTabs
-          tabs={[
-            { key: 'todos', label: 'To-Dos' },
-            { key: 'lists', label: 'Lists' },
-          ]}
-          active={tab}
-          onChange={setTab}
-        />
       </div>
 
       {tab === 'lists' && (

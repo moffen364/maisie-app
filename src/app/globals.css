@@ -11,6 +11,8 @@
 :root {
   --background: oklch(0.977 0.010 355);
   --foreground: oklch(0.19 0.01 355);
+  /* Distance from viewport bottom to clear the bottom nav + a gap, safe-area aware */
+  --fab-clear: calc(4rem + max(env(safe-area-inset-bottom), 0.5rem) + 0.75rem);
 }
 
 body {

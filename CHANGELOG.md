@@ -9,6 +9,7 @@ Personal life planning app — release history.
 ### ✨ New
 - **Lists** — a new tab next to To-Dos for persistent lists that aren't tied to a week: Grocery, Top Ups, and Wishlist come built in, and you can add your own. Quick-add now recognises list items too (e.g. "add milk, eggs, and bread"), and Sunday meal planning proposes itemized grocery items straight into the Grocery list instead of one generic "Grocery shop" reminder.
 - **Delete and undo in Lists** — remove a single item, delete a whole list, or clear all checked items. Deleting a list or clearing checked items now needs a confirming second tap first, so a stray tap can't wipe anything by accident.
+- **Floating "+" button, and Plan gets its own tab** — the `+` button now floats above the nav bar instead of sitting in it, and only shows up where it's useful: a single tap opens Quick Add on Week and Year, and it's hidden on Plan and Finance since they already have their own primary action. On To-Dos, the same button opens a small menu with Quick Add and Lists instead — To-Dos and Lists no longer share a tab row, the floating button is now the way to switch. Plan is back in the bottom nav as its own tab.
 
 ### 🐛 Fixed
 - **New list names could vanish without saving** — tapping away to dismiss the keyboard after typing a new list name (the natural thing to do on a phone) discarded it silently instead of saving it. It now saves the same way pressing Enter does.

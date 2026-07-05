@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import QuickAddSheet from './QuickAddSheet';
+import FloatingActionButton from './FloatingActionButton';
 
 const ACTIVE_COLOR = '#db2777';
 const INACTIVE_COLOR = '#9ca3af';
@@ -78,9 +77,18 @@ function FinanceIcon({ active }: { active: boolean }) {
   );
 }
 
+function PlanIcon({ active }: { active: boolean }) {
+  const color = active ? ACTIVE_COLOR : INACTIVE_COLOR;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke={color} strokeWidth={1.6}>
+      <rect x="3" y="2" width="18" height="20" rx="2" />
+      <path d="M7 6h10M7 10.5h10M7 15h6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function BottomNav() {
   const pathname = usePathname();
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   return (
     <>
@@ -106,16 +114,15 @@ export default function BottomNav() {
             </span>
           </Link>
 
-          <button
-            onClick={() => setShowQuickAdd(true)}
-            className="flex items-center justify-center w-12 h-12 bg-brand rounded-full shadow-lg shadow-pink-200 -mt-4"
-            aria-label="Quick add"
+          <Link
+            href="/plan"
+            className="flex flex-col items-center gap-0.5 px-4 py-1"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} className="w-6 h-6">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
+            <PlanIcon active={pathname.startsWith('/plan')} />
+            <span className={`text-[10px] font-medium ${pathname.startsWith('/plan') ? 'text-pink-600' : 'text-gray-400'}`}>
+              Plan
+            </span>
+          </Link>
 
           <Link
             href="/todos"
@@ -139,7 +146,7 @@ export default function BottomNav() {
         </div>
       </nav>
 
-      <QuickAddSheet open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
+      <FloatingActionButton />
     </>
   );
 }

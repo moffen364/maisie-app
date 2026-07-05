@@ -43,7 +43,7 @@ When a task establishes a new deliberate decision (a product/architecture choice
 
 **Mid-week quick-add:** `QuickAddSheet` → `POST /api/quick-add` → Claude parses natural language → either inserts into `calendar_entries`/`todos`, or (if `isListItem`) into `list_items` — matching an existing list by name or creating a new one, supporting multi-item adds in one message (e.g. "add milk, eggs, and bread").
 
-**Lists:** `/todos` has a segmented control (`SegmentedTabs`) switching between To-Dos and Lists. The Lists tab (`ListsPanel`) shows a pill row of `lists` (Grocery / Top Ups / Wishlist / custom) and the active list's `list_items`, via `GET /api/lists` and `POST/PATCH/DELETE /api/lists/items`.
+**Lists:** `/todos` switches between To-Dos and Lists via the floating action button (see below), tracked by the `?view=lists` search param — there's no top tab bar. The Lists view (`ListsPanel`) shows a pill row of `lists` (Grocery / Top Ups / Wishlist / custom) and the active list's `list_items`, via `GET /api/lists` and `POST/PATCH/DELETE /api/lists/items`.
 
 **Finance:** Transactions imported via `POST /api/finance/import` (Claude parses raw bank statement text) → saved via `POST /api/finance/transactions`. Weekly budget is derived from `finance_profile` (monthly take-home minus fixed expenses, divided by 4.33) — set in `/settings` via `PUT /api/finance/profile`. Weekly spend and monthly breakdown are served by `/api/finance/summary` and `/api/finance/monthly`.
 
@@ -73,9 +73,9 @@ Next.js App Router, Tailwind v4 (`@import "tailwindcss"` — no `tailwind.config
 
 **Category colour system** is defined in `src/lib/types.ts` as `CATEGORY_COLORS`, `CATEGORY_DOT` — import from there rather than hardcoding Tailwind classes. Finance categories have their own parallel `FINANCE_CATEGORY_COLORS`, `FINANCE_CATEGORY_DOT`, and `FINANCE_CATEGORY_LABELS` in the same file.
 
-**Bottom nav** is in `src/components/BottomNav.tsx` (included in root layout). Tabs: Week `/` | Year `/week` | + (QuickAddSheet) | To-Dos `/todos` | Finance `/finance`. It owns the `QuickAddSheet` modal state. The `+` tab opens a sheet, not a page. Note: the route names and nav labels are deliberately mismatched — the "Week" timeline view lives at `/` and the "Year" calendar lives at `/week`.
+**Bottom nav** is in `src/components/BottomNav.tsx` (included in root layout). Tabs: Week `/` | Year `/week` | Plan `/plan` | To-Dos `/todos` | Finance `/finance`. Note: the route names and nav labels are deliberately mismatched — the "Week" timeline view lives at `/` and the "Year" calendar lives at `/week`.
 
-**Plan** (`/plan`) is accessible but not in the bottom nav. It is the Sunday planning wizard.
+**Floating action button** (`src/components/FloatingActionButton.tsx`) is rendered by `BottomNav` and owns the `QuickAddSheet` modal state. It floats bottom-right, above the nav bar. On `/` and `/week` it single-tap opens Quick Add; it doesn't render at all on `/plan` or `/finance`; on `/todos` it fans out into "Quick Add" and "Lists"/"To-Dos" mini-actions (see DECISIONS.md for the full behavior contract).
 
 **Settings** (`/settings`) is not in the bottom nav — it is linked from the gear icon on the root `/` page. It manages the `user_profile` text and `finance_profile` (monthly take-home + fixed expenses list).
 
