@@ -43,3 +43,8 @@ next-env.d.ts
 # claude skills
 .claude/skills/impeccable
 .impeccable/
+.superpowers/
+
+# claude local state (permissions, session memory)
+.claude/settings.local.json
+.claude/projects/
