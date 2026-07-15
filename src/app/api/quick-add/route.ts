@@ -13,7 +13,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'text is required' }, { status: 400 });
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    // Server runs in UTC; toISOString() would silently roll back to the previous
+    // day for Sydney local times before ~10-11am. Format directly in Sydney's zone.
+    const now = new Date();
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+    const todayWeekday = new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      weekday: 'long',
+    }).format(now);
     const anchorDate = targetDate ?? today;
     const weekStart = getMondayOfWeek(new Date(anchorDate + 'T00:00:00'));
     const weekSunday = (() => {
@@ -81,9 +93,10 @@ Otherwise, return a JSON object with these fields:
 - isTask: boolean (true if this is a to-do/errand rather than a calendar entry; always false when end_day is set)
 - message: string (a short confirmation message — for multi-day: "Trip to Noosa added, 24–26 Aug")
 
+Today is ${todayWeekday}, ${today}.
 ${targetDate
   ? `The user has selected ${targetDate} in their calendar — use that as the "day" unless the text clearly specifies a different day.`
-  : `Today is ${today}. The current week runs from ${weekStart} to ${weekSunday}.`}
+  : `The current week runs from ${weekStart} to ${weekSunday}.`}
 Always schedule in the future: if a named weekday (e.g. "Tuesday") would fall on or before today, use next week's occurrence.
 Respond with ONLY valid JSON, no markdown.`;
 
@@ -144,15 +157,19 @@ Respond with ONLY valid JSON, no markdown.`;
         `;
       }
     } else if (data.isTask) {
+      const entryWeek = data.day
+        ? await getOrCreateWeek(getMondayOfWeek(new Date(data.day + 'T00:00:00')))
+        : week;
       await sql`
         INSERT INTO todos (week_id, title, due_day, completed)
-        VALUES (${week.id}, ${data.title}, ${data.day ?? null}, false)
+        VALUES (${entryWeek.id}, ${data.title}, ${data.day ?? null}, false)
       `;
     } else {
+      const entryWeek = await getOrCreateWeek(getMondayOfWeek(new Date(data.day + 'T00:00:00')));
       await sql`
         INSERT INTO calendar_entries (week_id, day, end_day, time, category, title, notes, completed)
         VALUES (
-          ${week.id},
+          ${entryWeek.id},
           ${data.day}::date,
           ${data.end_day ?? null},
           ${data.end_day ? null : (data.time ?? null)},

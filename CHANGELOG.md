@@ -4,6 +4,14 @@ Personal life planning app — release history.
 
 ---
 
+## 14 July 2026
+
+### 🐛 Fixed
+- **Quick-added events could go missing from the Week view while still showing in Year view** — Quick Add computed which week to file a new entry under *before* asking Claude to parse the text, using whatever day was "current" at the time rather than the day Claude actually parsed out of the message. An event added for a future date while viewing an earlier week got tagged with the wrong week, so the Week view (which filters by that stored week) silently dropped it, even though Year view (which filters by the actual date) showed it fine. `week_id` is now derived from the parsed day after Claude responds. Also backfilled 11 existing calendar entries that had drifted this way.
+- **Quick Add could land a named weekday ("WFH Wednesday") on the wrong day** — two compounding bugs: (1) `today` was computed with `new Date().toISOString()` on the server, which runs in UTC and silently rolls back to the previous day for Sydney local times before ~10-11am; (2) the prompt told Claude the numeric date but not the weekday name, forcing it to derive "what day of the week is this?" itself before it could resolve "Wednesday" — an error-prone step. Both fixed: "today" is now formatted directly in `Australia/Sydney`, and the prompt states the weekday explicitly (e.g. "Today is Tuesday, 2026-07-14").
+
+---
+
 ## 5 July 2026
 
 ### ✨ New

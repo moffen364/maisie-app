@@ -62,6 +62,9 @@ The Anthropic API key must never reach the client. All AI calls go through API r
 
 **The chat route (`/api/plan/chat`) streams; all others are non-streaming.**
 
+**Prompts that reference "today" must state the weekday name, not just the numeric date.**
+Giving Claude only `Today is 2026-07-14` forces it to silently derive the day-of-week before it can resolve a relative reference like "Wednesday" — an easy step for an LLM (especially the cheap `AI_MODEL` tier) to get wrong, compounding into an off-by-one/more day. State it as `Today is Tuesday, 2026-07-14` wherever a prompt does relative-weekday parsing (currently `/api/quick-add`).
+
 **Section prompts live in `src/prompts/[section].ts`.**
 Changing a prompt takes effect on next deploy. No DB involvement.
 
@@ -78,11 +81,17 @@ Run once to set up: `psql $DATABASE_URL -f src/db/schema.sql`
 **Always cast date/time columns to text in queries.**
 The Neon driver returns `date` and `time` columns as JS Date objects. Prevent this by casting: `day::text`, `time::text`.
 
+**Server-side "today" must be computed in `Australia/Sydney`, never `new Date().toISOString()`.**
+Vercel's serverless functions run in UTC, not Sydney. `toISOString().split('T')[0]` silently rolls back to the previous calendar day for any Sydney local time before ~10-11am (the UTC+10/+11 gap). This is a single-user app for someone in Sydney, so hardcode the zone with `Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', ... })` rather than relying on the server's local time. `src/lib/utils.ts`'s `toDateStr`/`getTodayStr` avoid `toISOString()` too, but only fix the UTC-shift problem for *client* components, where local time is already Sydney's — they don't help on the server. Grep for `toISOString().split('T')[0]` before adding a new date route; a few older ones (`/api/calendar`, `/api/finance/monthly`, `/api/cron/nudges`) still have this pattern and haven't been audited yet.
+
 **All foreign keys go through `week_id → weeks.id`.**
 There is no direct user FK on entries/todos/nudges — everything is scoped to a week.
 
 **`lists`/`list_items` are the one exception — not week-scoped.**
 A grocery list or wishlist persists past Sunday; it has no "week" to belong to. These two tables have no `week_id` FK, unlike every other table. Three default lists (Grocery, Top Ups, Wishlist) are seeded by `schema.sql`.
+
+**`week_id` must be derived from the entry's actual `day`, never from request-time context.**
+`POST /api/quick-add` used to compute `week_id` from the anchor date (today, or whatever day was selected) *before* asking Claude to parse the text, then reused that same `week_id` regardless of what day Claude returned. Since the Week view (`/`) filters `calendar_entries`/`todos` by `week_id` (not by date range — see `/api/calendar`'s `weekStart` branch), an entry parsed for a different week than the anchor date silently vanished from Week view while still showing correctly in Year view (which filters by actual date). Always compute `week_id` from the parsed `day` after Claude responds, not from context captured earlier in the request.
 
 **The old single "Grocery shop" calendar task is gone.**
 `/plan/review` and `/plan/confirm` used to create one `calendar_entries` row (category `task`, title "Grocery shop") with the week's meal plan summarised in `notes`. That's been replaced by itemized `groceryItems` inserted directly into the Grocery list — meal planning now proposes actual grocery items instead of a single reminder task. Don't reintroduce the old single-task pattern.
