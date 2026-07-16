@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { CalendarEntry, Nudge } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
-import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays, sortByTime } from '@/lib/utils';
+import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays, sortByTime, QUICK_ADD_EVENT } from '@/lib/utils';
 import AllDayBanner from '@/components/AllDayBanner';
 import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
@@ -198,28 +198,34 @@ export default function WeekPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const [calRes, nudgeRes] = await Promise.all([
-          fetch(`/api/calendar?weekStart=${weekStart}`),
-          fetch(`/api/nudges?weekStart=${weekStart}`),
-        ]);
-        const [calData, nudgeData] = await Promise.all([
-          calRes.json(), nudgeRes.json(),
-        ]);
-        setEntries(calData.entries ?? []);
-        setNudges(nudgeData.nudges ?? []);
-      } catch {
-        setError('Could not load data. Try refreshing.');
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [calRes, nudgeRes] = await Promise.all([
+        fetch(`/api/calendar?weekStart=${weekStart}`),
+        fetch(`/api/nudges?weekStart=${weekStart}`),
+      ]);
+      const [calData, nudgeData] = await Promise.all([
+        calRes.json(), nudgeRes.json(),
+      ]);
+      setEntries(calData.entries ?? []);
+      setNudges(nudgeData.nudges ?? []);
+    } catch {
+      setError('Could not load data. Try refreshing.');
+    } finally {
+      setLoading(false);
     }
+  }, [weekStart, setEntries]);
+
+  useEffect(() => {
     fetchData();
-  }, [weekStart]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    window.addEventListener(QUICK_ADD_EVENT, fetchData);
+    return () => window.removeEventListener(QUICK_ADD_EVENT, fetchData);
+  }, [fetchData]);
 
   async function dismissNudge(id: string) {
     setNudges((prev) => prev.map((n) => (n.id === id ? { ...n, dismissed: true } : n)));

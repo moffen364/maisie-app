@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import type { List, ListItem } from '@/lib/types';
 import { LIST_PALETTE } from '@/lib/types';
+import { QUICK_ADD_EVENT } from '@/lib/utils';
 import CheckCircleButton from '@/components/CheckCircleButton';
 
 function ListItemRow({
@@ -68,24 +69,30 @@ export default function ListsPanel() {
     };
   }, []);
 
-  useEffect(() => {
-    async function fetchLists() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch('/api/lists');
-        const data = await res.json();
-        setLists(data.lists ?? []);
-        setItems(data.items ?? []);
-        setActiveListId((prev) => prev ?? data.lists?.[0]?.id ?? null);
-      } catch {
-        setError('Could not load lists. Try refreshing.');
-      } finally {
-        setLoading(false);
-      }
+  const fetchLists = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/lists');
+      const data = await res.json();
+      setLists(data.lists ?? []);
+      setItems(data.items ?? []);
+      setActiveListId((prev) => prev ?? data.lists?.[0]?.id ?? null);
+    } catch {
+      setError('Could not load lists. Try refreshing.');
+    } finally {
+      setLoading(false);
     }
-    fetchLists();
   }, []);
+
+  useEffect(() => {
+    fetchLists();
+  }, [fetchLists]);
+
+  useEffect(() => {
+    window.addEventListener(QUICK_ADD_EVENT, fetchLists);
+    return () => window.removeEventListener(QUICK_ADD_EVENT, fetchLists);
+  }, [fetchLists]);
 
   useEffect(() => {
     if (addingList) newListInputRef.current?.focus();

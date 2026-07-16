@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Spinner from '@/components/Spinner';
 import { useModalTransition } from '@/hooks/useModalTransition';
 import CenteredModal from '@/components/CenteredModal';
+import { QUICK_ADD_EVENT } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -48,6 +49,7 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setToast(data.message || 'Added!');
       setInput('');
+      window.dispatchEvent(new Event(QUICK_ADD_EVENT));
       setTimeout(() => {
         onClose();
         setToast('');

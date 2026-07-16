@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Todo } from '@/lib/types';
-import { getMondayOfWeek } from '@/lib/utils';
+import { getMondayOfWeek, QUICK_ADD_EVENT } from '@/lib/utils';
 import CheckCircleButton from '@/components/CheckCircleButton';
 import ListsPanel from '@/components/ListsPanel';
 
@@ -48,22 +48,28 @@ function TodosContent() {
   const [adding, setAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    async function fetchTodos() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/todos?weekStart=${weekStart}`);
-        const data = await res.json();
-        setTodos(data.todos ?? []);
-      } catch {
-        setError('Could not load to-dos. Try refreshing.');
-      } finally {
-        setLoading(false);
-      }
+  const fetchTodos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/todos?weekStart=${weekStart}`);
+      const data = await res.json();
+      setTodos(data.todos ?? []);
+    } catch {
+      setError('Could not load to-dos. Try refreshing.');
+    } finally {
+      setLoading(false);
     }
-    fetchTodos();
   }, [weekStart]);
+
+  useEffect(() => {
+    fetchTodos();
+  }, [fetchTodos]);
+
+  useEffect(() => {
+    window.addEventListener(QUICK_ADD_EVENT, fetchTodos);
+    return () => window.removeEventListener(QUICK_ADD_EVENT, fetchTodos);
+  }, [fetchTodos]);
 
   async function handleCheck(id: string, completed: boolean) {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed } : t)));

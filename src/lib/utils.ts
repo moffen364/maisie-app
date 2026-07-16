@@ -1,3 +1,8 @@
+// Dispatched on window after Quick Add successfully saves an entry, so any
+// currently-mounted page can refetch — Quick Add lives in the global FAB, not
+// on the page itself, so there's no prop/state path back to the page's data.
+export const QUICK_ADD_EVENT = 'quickadd:success';
+
 // Formats a Date as YYYY-MM-DD using its local calendar fields (not toISOString,
 // which converts to UTC and shifts the date for any non-UTC timezone).
 export function toDateStr(d: Date): string {

@@ -50,6 +50,9 @@ Uses `@import "tailwindcss"` in `globals.css`. There is no `tailwind.config.js/t
 **Destructive actions use an inline two-tap confirm, never `window.confirm()`.**
 Deleting a list or bulk-clearing checked items in `ListsPanel.tsx` requires tapping the same button twice within ~2.5s (first tap swaps the label to "Delete?"/"Tap to confirm", second tap executes; it auto-reverts if not confirmed). This was chosen over a native browser dialog to keep the "gentle" brand feel and avoid a jarring modal for a personal, low-stakes app. Follow this pattern for any new destructive action rather than introducing native `confirm()` or a full modal.
 
+**Any page that reads data Quick Add can write to must listen for the `quickadd:success` window event.**
+Quick Add lives in the global floating action button (`FloatingActionButton`/`QuickAddSheet`), outside every page's own component tree, so there's no prop or state path back to a page's data after a successful add — writes landed correctly but the currently-open page never refetched, making Quick Add look completely broken until a manual reload. `QuickAddSheet` now does `window.dispatchEvent(new Event(QUICK_ADD_EVENT))` (constant in `src/lib/utils.ts`) on success; `/`, `/week`, `/todos`, and `ListsPanel` each extract their fetch into a `useCallback` and re-run it on that event. Give any new page/view with the same "Quick Add can write here" property the same listener rather than assuming a reload will happen.
+
 ---
 
 ## AI / Claude
@@ -62,8 +65,11 @@ The Anthropic API key must never reach the client. All AI calls go through API r
 
 **The chat route (`/api/plan/chat`) streams; all others are non-streaming.**
 
-**Prompts that reference "today" must state the weekday name, not just the numeric date.**
-Giving Claude only `Today is 2026-07-14` forces it to silently derive the day-of-week before it can resolve a relative reference like "Wednesday" — an easy step for an LLM (especially the cheap `AI_MODEL` tier) to get wrong, compounding into an off-by-one/more day. State it as `Today is Tuesday, 2026-07-14` wherever a prompt does relative-weekday parsing (currently `/api/quick-add`).
+**Prompts doing relative-weekday parsing must list out each upcoming date, not just state today's weekday name.**
+Stating `Today is Tuesday, 2026-07-14` (a prior fix) still wasn't enough — the cheap `AI_MODEL` tier kept landing "Saturday" on the wrong calendar date because it was still doing the day-of-week arithmetic itself, just from a better starting point. It reliably got it right once the prompt spelled out `Tuesday 2026-07-14, Wednesday 2026-07-15, ...` for the next 14 days and told it to look up the mentioned weekday rather than compute it. Applies currently to `/api/quick-add`; give any future prompt doing relative-day parsing the same treatment rather than reintroducing "just state today."
+
+**Quick Add: anything with a specific time is a calendar entry, never a task, even if it reads like a chore.**
+"Haircut tomorrow at 11am" and "dentist Thursday 3pm" were being classified `isTask: true` (errand wording) and filed into `todos` — invisible on the Week view, which only shows `calendar_entries`. A todo has no time field at all, so a time-bound appointment silently lost its time and its visibility the moment it got classified this way. The `isTask` rule in `/api/quick-add` now keys off "does the text give a specific time," not "does it read like an errand" — `isTask` is reserved for undated, time-flexible errands only.
 
 **Section prompts live in `src/prompts/[section].ts`.**
 Changing a prompt takes effect on next deploy. No DB involvement.

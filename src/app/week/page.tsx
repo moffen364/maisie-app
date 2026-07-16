@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
 import type { CalendarEntry, Category } from '@/lib/types';
 import { CATEGORY_DOT, CATEGORY_ALLDAY_BAR } from '@/lib/types';
-import { formatTime, getTodayStr, sortByTime } from '@/lib/utils';
+import { formatTime, getTodayStr, sortByTime, QUICK_ADD_EVENT } from '@/lib/utils';
 import { useCalendarEntries } from '@/hooks/useCalendarEntries';
 import { useModalTransition } from '@/hooks/useModalTransition';
 import EntryDetailSheet from '@/components/EntryDetailSheet';
@@ -260,24 +260,30 @@ export default function YearPage() {
 
   const monthRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const from = `${year}-01-01`;
-        const to = `${year}-12-31`;
-        const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
-        const data = await res.json();
-        setEntries(data.entries ?? []);
-      } catch {
-        setError('Could not load data. Try refreshing.');
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const from = `${year}-01-01`;
+      const to = `${year}-12-31`;
+      const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
+      const data = await res.json();
+      setEntries(data.entries ?? []);
+    } catch {
+      setError('Could not load data. Try refreshing.');
+    } finally {
+      setLoading(false);
     }
+  }, [year, setEntries]);
+
+  useEffect(() => {
     fetchData();
-  }, [year]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    window.addEventListener(QUICK_ADD_EVENT, fetchData);
+    return () => window.removeEventListener(QUICK_ADD_EVENT, fetchData);
+  }, [fetchData]);
 
   useEffect(() => {
     if (!loading && monthRefs.current[currentMonth]) {
@@ -306,12 +312,7 @@ export default function YearPage() {
 
   function handleQuickAddClose() {
     setShowQuickAdd(false);
-    const from = `${year}-01-01`;
-    const to = `${year}-12-31`;
-    fetch(`/api/calendar?from=${from}&to=${to}`)
-      .then((r) => r.json())
-      .then((d) => setEntries(d.entries ?? []))
-      .catch(() => {});
+    fetchData();
   }
 
   const selectedEntries = selectedDay ? (entriesByDay[selectedDay] ?? []) : [];

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
-import { getMondayOfWeek } from '@/lib/utils';
+import { getMondayOfWeek, toDateStr } from '@/lib/utils';
 import { LIST_COLOR_ORDER } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
@@ -31,8 +31,21 @@ export async function POST(request: NextRequest) {
     const weekSunday = (() => {
       const d = new Date(weekStart + 'T00:00:00');
       d.setDate(d.getDate() + 6);
-      return d.toISOString().split('T')[0];
+      return toDateStr(d);
     })();
+
+    // Spell out each weekday's actual date for the next 14 days so Claude never has
+    // to derive "what date is next Tuesday" itself — that arithmetic is exactly what
+    // was producing off-by-one day errors even after the prompt stated today's name.
+    // Use toDateStr (local-field reads), not toISOString (UTC reads) — construction
+    // here is in the server's local time, and mixing local construction with UTC
+    // reads is exactly the bug this whole route was already patched for once.
+    const upcomingWeekdays = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(today + 'T00:00:00');
+      d.setDate(d.getDate() + i);
+      const label = new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', weekday: 'long' }).format(d);
+      return `${label} ${toDateStr(d)}`;
+    }).join(', ');
 
     const week = await getOrCreateWeek(weekStart);
 
@@ -90,14 +103,15 @@ Otherwise, return a JSON object with these fields:
 - end_day: YYYY-MM-DD or null — ONLY set for multi-day events spanning more than one day (e.g. "trip to Noosa 24–26 Aug" → end_day: "2026-08-26"). Must be after "day". null for all other entries.
 - time: HH:MM or null (always null when end_day is set)
 - notes: string or null
-- isTask: boolean (true if this is a to-do/errand rather than a calendar entry; always false when end_day is set)
+- isTask: boolean (true only for an undated-feeling errand with no fixed time, e.g. "pick up dry cleaning", "call the bank"; if the text gives a specific time, it's schedule-bound and belongs on the calendar — isTask: false — even if it reads like a chore, e.g. "haircut tomorrow at 11am" or "dentist Thursday 3pm" are calendar entries, not tasks; always false when end_day is set)
 - message: string (a short confirmation message — for multi-day: "Trip to Noosa added, 24–26 Aug")
 
 Today is ${todayWeekday}, ${today}.
+Dates for the next 14 days, so you never need to calculate a weekday yourself — look up the name mentioned in the text directly: ${upcomingWeekdays}.
 ${targetDate
   ? `The user has selected ${targetDate} in their calendar — use that as the "day" unless the text clearly specifies a different day.`
   : `The current week runs from ${weekStart} to ${weekSunday}.`}
-Always schedule in the future: if a named weekday (e.g. "Tuesday") would fall on or before today, use next week's occurrence.
+Always schedule in the future: if a named weekday (e.g. "Tuesday") would fall on or before today, use its occurrence next week instead (still found in the list above, or 7 days after the listed date if not).
 Respond with ONLY valid JSON, no markdown.`;
 
     const response = await anthropic.messages.create({

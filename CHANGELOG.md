@@ -4,6 +4,13 @@ Personal life planning app — release history.
 
 ---
 
+## 16 July 2026
+
+### 🐛 Fixed
+- **Quick Add appeared to do nothing** — reported as "none of my Quick Add events are showing up." Root cause was three separate bugs: (1) Quick Add lives in the floating action button, outside any page's own state, so a successful add never told the currently-open page to refetch — the entry was saved correctly but stayed invisible until you manually reloaded. Fixed with a `quickadd:success` window event that `/`, `/week`, `/todos`, and the Lists panel all listen for. (2) Timed appointments like "haircut tomorrow at 11am" were being classified as to-dos instead of calendar entries, so they landed on `/todos` — invisible from the Week view a user actually checks day-to-day. The prompt now treats anything with a specific time as calendar-bound. (3) Yesterday's weekday-name fix wasn't enough — the model was still doing "what date is next Saturday" arithmetic itself and getting it wrong (consistently, not randomly). The prompt now lists the actual date of each of the next 14 weekdays so Claude looks it up instead of computing it.
+
+---
+
 ## 14 July 2026
 
 ### 🐛 Fixed
