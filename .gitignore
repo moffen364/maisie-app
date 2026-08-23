@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# real personal seed data — not for public repo
+src/db/seed.sql
+
 # vercel
 .vercel
 
