@@ -1,6 +1,6 @@
 # 🌸 Maisie's Planner
 
-A little pink corner of the internet that plans my week, nudges me when I'm slacking, and tells me where my money went.
+A little pink corner of the internet that plans my week and tells me where my money went.
 
 No login screen. No "Team" pricing tier. No onboarding wizard. Just one person's Sunday-night ritual, turned into an app.
 
@@ -14,7 +14,6 @@ It's a **personal weekly planner**, built as an installable phone app (PWA), wit
 - ✅ **Today / Week** — a running view of what's on, with one-tap complete and quick-add for anything that pops up mid-week.
 - 📝 **To-Dos & Lists** — todos for the week, plus persistent lists (Grocery, Top Ups, Wishlist, or whatever I make up) that don't care what week it is.
 - 💸 **Finance** — paste in a bank statement, Claude categorises every line, and I get a weekly budget bar without opening a spreadsheet.
-- 🔔 **Nudges** — twice a day, a cron job asks Claude "does anything about this week need a gentle poke?" and drops a dismissible banner if so.
 
 It's built entirely around **one user** (me). There's a single profile row in the database that Claude reads before every AI call — it's basically Claude's running notes on my habits, preferences, and patterns, and it gets to write back to it after planning sessions.
 
@@ -32,7 +31,7 @@ Deliberately **not**: a stark Linear/Notion-style productivity tool, a fintech d
 | Styling | Tailwind CSS v4 |
 | Database | [Neon](https://neon.tech/) Postgres |
 | AI | [Anthropic's Claude](https://www.anthropic.com/claude) (Haiku for quick classification, Sonnet for planning/parsing) |
-| Hosting | Vercel, with a cron job for the twice-daily nudges |
+| Hosting | Vercel |
 
 Everything's server-side for anything touching the database or the Claude API — the frontend is just React client components talking to Next.js API routes.
 
@@ -48,7 +47,6 @@ You'll need a `.env.local` with:
 ```
 DATABASE_URL=      # Neon Postgres connection string
 ANTHROPIC_API_KEY=
-CRON_SECRET=       # optional — protects /api/cron/nudges in production
 ```
 
 Then set up the schema once:

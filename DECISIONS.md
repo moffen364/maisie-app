@@ -6,8 +6,13 @@ Decisions made during the creation of this app, so future Claude sessions don't 
 
 ## Navigation
 
-**Finance replaced the Nudges tab.**
-There is no Nudges tab. Nudges are a notification mechanism only — they appear as a dismissible banner on the main page (`activeNudge` in `page.tsx`). The `/nudges` page and `NudgeItem` component have been deleted — do not recreate them.
+**Nudges are removed entirely.**
+The feature never earned its keep — the cron fired twice a day and the banner
+went unread. Removed in full: the `/api/cron/nudges` and `/api/nudges` routes,
+the `/nudges` page, the Today-page banner, the `Nudge`/`NudgeCategory` types,
+the `crons` block in `vercel.json`, and the `nudges` table (dropped; it was
+empty). Don't recreate it without a clearer reason than "it'd be nice to be
+reminded".
 
 **QuickAdd is not a page — it's a sheet.**
 `QuickAddSheet` opens as a modal bottom sheet, triggered from the floating action button (see below). It no longer has an internal tab bar — it's always just the add textarea, scoped to `targetDate` when opened from a specific day.
@@ -39,11 +44,6 @@ Requires `APP_PASSWORD` and `AUTH_SECRET`. It fails closed — if either is
 unset the app returns 503 rather than serving. Don't "fix" that by letting it
 fall through; an unset password on a public URL is the exact failure it
 prevents.
-
-`/api/cron` is exempt from the password because Vercel's scheduler can't hold
-a cookie — it is guarded by `CRON_SECRET` instead, which must now actually be
-set. It was previously optional, and unset, which left the endpoint open to
-unauthenticated Claude API calls.
 
 Chose a password cookie over Vercel Authentication because this is an
 installed standalone PWA: Vercel's flow bounces to vercel.com to authenticate,
@@ -106,10 +106,10 @@ Run once to set up: `psql $DATABASE_URL -f src/db/schema.sql`
 The Neon driver returns `date` and `time` columns as JS Date objects. Prevent this by casting: `day::text`, `time::text`.
 
 **Server-side "today" must be computed in `Australia/Sydney`, never `new Date().toISOString()`.**
-Vercel's serverless functions run in UTC, not Sydney. `toISOString().split('T')[0]` silently rolls back to the previous calendar day for any Sydney local time before ~10-11am (the UTC+10/+11 gap). This is a single-user app for someone in Sydney, so hardcode the zone with `Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', ... })` rather than relying on the server's local time. `src/lib/utils.ts`'s `toDateStr`/`getTodayStr` avoid `toISOString()` too, but only fix the UTC-shift problem for *client* components, where local time is already Sydney's — they don't help on the server. Grep for `toISOString().split('T')[0]` before adding a new date route; a few older ones (`/api/calendar`, `/api/finance/monthly`, `/api/cron/nudges`) still have this pattern and haven't been audited yet.
+Vercel's serverless functions run in UTC, not Sydney. `toISOString().split('T')[0]` silently rolls back to the previous calendar day for any Sydney local time before ~10-11am (the UTC+10/+11 gap). This is a single-user app for someone in Sydney, so hardcode the zone with `Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', ... })` rather than relying on the server's local time. `src/lib/utils.ts`'s `toDateStr`/`getTodayStr` avoid `toISOString()` too, but only fix the UTC-shift problem for *client* components, where local time is already Sydney's — they don't help on the server. Grep for `toISOString().split('T')[0]` before adding a new date route; a few older ones (`/api/calendar`, `/api/finance/monthly`) still have this pattern and haven't been audited yet.
 
 **All foreign keys go through `week_id → weeks.id`.**
-There is no direct user FK on entries/todos/nudges — everything is scoped to a week.
+There is no direct user FK on entries/todos — everything is scoped to a week.
 
 **`lists`/`list_items` are the one exception — not week-scoped.**
 A grocery list or wishlist persists past Sunday; it has no "week" to belong to. These two tables have no `week_id` FK, unlike every other table. Three default lists (Grocery, Top Ups, Wishlist) are seeded by `schema.sql`.

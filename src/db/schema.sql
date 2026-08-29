@@ -38,15 +38,6 @@ CREATE TABLE IF NOT EXISTS todos (
   completed BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE IF NOT EXISTS nudges (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  week_id UUID NOT NULL REFERENCES weeks(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('todo', 'social', 'health', 'errand')),
-  triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  dismissed BOOLEAN NOT NULL DEFAULT FALSE
-);
-
 CREATE TABLE IF NOT EXISTS section_inputs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   week_id UUID NOT NULL REFERENCES weeks(id) ON DELETE CASCADE,

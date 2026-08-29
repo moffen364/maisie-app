@@ -1,5 +1,4 @@
 export type Category = 'exercise' | 'food' | 'social' | 'event' | 'task';
-export type NudgeCategory = 'todo' | 'social' | 'health' | 'errand';
 export type PlanSection = 'exercise' | 'meals' | 'todos' | 'social' | 'events';
 export type FinanceCategory = 'eating_out' | 'coffees_snacks' | 'transport' | 'going_out' | 'health_beauty' | 'shopping' | 'subscriptions' | 'expenses' | 'groceries' | 'income';
 
@@ -33,15 +32,6 @@ export interface Todo {
   title: string;
   due_day: string | null;
   completed: boolean;
-}
-
-export interface Nudge {
-  id: string;
-  week_id: string;
-  message: string;
-  category: NudgeCategory;
-  triggered_at: string;
-  dismissed: boolean;
 }
 
 export interface SectionInput {

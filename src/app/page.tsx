@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { CalendarEntry, Nudge } from '@/lib/types';
+import type { CalendarEntry } from '@/lib/types';
 import { CATEGORY_DOT } from '@/lib/types';
 import { getMondayOfWeek, formatShortDay, formatTime, getTodayStr, getWeekDays, sortByTime, QUICK_ADD_EVENT } from '@/lib/utils';
 import AllDayBanner from '@/components/AllDayBanner';
@@ -193,7 +193,6 @@ export default function WeekPage() {
   const days = getWeekDays(weekStart);
 
   const { entries, setEntries, entriesByDay, updateEntry, deleteEntry, checkEntry } = useCalendarEntries();
-  const [nudges, setNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
@@ -202,15 +201,9 @@ export default function WeekPage() {
     setLoading(true);
     setError(null);
     try {
-      const [calRes, nudgeRes] = await Promise.all([
-        fetch(`/api/calendar?weekStart=${weekStart}`),
-        fetch(`/api/nudges?weekStart=${weekStart}`),
-      ]);
-      const [calData, nudgeData] = await Promise.all([
-        calRes.json(), nudgeRes.json(),
-      ]);
+      const calRes = await fetch(`/api/calendar?weekStart=${weekStart}`);
+      const calData = await calRes.json();
       setEntries(calData.entries ?? []);
-      setNudges(nudgeData.nudges ?? []);
     } catch {
       setError('Could not load data. Try refreshing.');
     } finally {
@@ -226,17 +219,6 @@ export default function WeekPage() {
     window.addEventListener(QUICK_ADD_EVENT, fetchData);
     return () => window.removeEventListener(QUICK_ADD_EVENT, fetchData);
   }, [fetchData]);
-
-  async function dismissNudge(id: string) {
-    setNudges((prev) => prev.map((n) => (n.id === id ? { ...n, dismissed: true } : n)));
-    try {
-      await fetch('/api/nudges', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, dismissed: true }),
-      });
-    } catch { /* silently fail */ }
-  }
 
   const handleToggleEntry = useCallback((id: string, done: boolean) => {
     updateEntry(id, { completed: done });
@@ -255,9 +237,6 @@ export default function WeekPage() {
     updateEntry(id, { notes });
     setSelectedEntry((prev) => prev?.id === id ? { ...prev, notes } : prev);
   }
-
-  const activeNudge = nudges.filter((n) => !n.dismissed)
-    .sort((a, b) => b.triggered_at.localeCompare(a.triggered_at))[0] ?? null;
 
   const pastDays = days.filter((d) => d < today);
   const futureDays = days.filter((d) => d > today);
@@ -287,21 +266,6 @@ export default function WeekPage() {
           </svg>
         </Link>
       </div>
-
-      {!loading && activeNudge && (
-        <div className="bg-pink-50 border border-pink-200 rounded-xl mx-4 mt-3 p-3 flex items-start gap-2 text-sm text-pink-700">
-          <svg className="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 1a5 5 0 0 1 3.536 8.536A3 3 0 0 1 10 11.5V13H6v-1.5a3 3 0 0 1-1.536-1.964A5 5 0 0 1 8 1z" stroke="#db2777" strokeWidth="1.2" fill="none" />
-            <path d="M6 14h4" stroke="#db2777" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-          <p className="flex-1 leading-snug">{activeNudge.message}</p>
-          <button
-            onClick={() => dismissNudge(activeNudge.id)}
-            aria-label="Dismiss nudge"
-            className="shrink-0 text-pink-400 hover:text-pink-600 leading-none text-base"
-          >×</button>
-        </div>
-      )}
 
       {error && <p className="mx-4 mt-3 text-sm text-red-600">{error}</p>}
 

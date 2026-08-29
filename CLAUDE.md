@@ -22,7 +22,6 @@ Requires `.env.local` with:
 ```
 DATABASE_URL=     # Neon Postgres connection string
 ANTHROPIC_API_KEY=
-CRON_SECRET=      # optional — protects /api/cron/nudges in production
 ```
 
 Run `psql $DATABASE_URL -f src/db/schema.sql` once to set up the DB (or paste the file into the Neon SQL editor).
@@ -47,11 +46,9 @@ When a task establishes a new deliberate decision (a product/architecture choice
 
 **Finance:** Transactions imported via `POST /api/finance/import` (Claude parses raw bank statement text) → saved via `POST /api/finance/transactions`. Weekly budget is derived from `finance_profile` (monthly take-home minus fixed expenses, divided by 4.33) — set in `/settings` via `PUT /api/finance/profile`. Weekly spend and monthly breakdown are served by `/api/finance/summary` and `/api/finance/monthly`.
 
-**Nudges:** Vercel Cron (`0 8,19 * * *`) calls `POST /api/cron/nudges` → Claude checks the week's entries/todos → writes rows to `nudges` table → shown as a dismissible banner on the Today page.
-
 ### Database (Neon Postgres)
 
-Schema in `src/db/schema.sql`. Key tables: `user_profile`, `weeks`, `calendar_entries`, `todos`, `nudges`, `section_inputs`, `finance_profile`, `transactions`. All FK through `week_id → weeks.id`. Always cast date/time columns to text in queries (`day::text`, `time::text`) — the Neon driver returns them as JS Date objects otherwise.
+Schema in `src/db/schema.sql`. Key tables: `user_profile`, `weeks`, `calendar_entries`, `todos`, `section_inputs`, `finance_profile`, `transactions`. All FK through `week_id → weeks.id`. Always cast date/time columns to text in queries (`day::text`, `time::text`) — the Neon driver returns them as JS Date objects otherwise.
 
 `lists` and `list_items` are the one exception — not week-scoped (see `DECISIONS.md`). `lists` is seeded with three defaults (Grocery, Top Ups, Wishlist), each with a `color` from `ListColor`/`LIST_PALETTE` in `src/lib/types.ts`. `list_items.list_id → lists.id`, no `week_id`.
 

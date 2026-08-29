@@ -18,7 +18,6 @@ const COOKIE_NAME = 'planner_auth';
 const PUBLIC_PATHS = [
   '/login',
   '/api/login',
-  '/api/cron', // Vercel's scheduler can't hold a cookie; guarded by CRON_SECRET
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',

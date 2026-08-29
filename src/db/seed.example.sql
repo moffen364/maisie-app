@@ -3,7 +3,7 @@
 -- Run: psql $DATABASE_URL -f src/db/seed.sql
 
 -- Clear existing data (preserve schema, truncate in FK-safe order)
-TRUNCATE transactions, nudges, section_inputs, todos, calendar_entries, weeks RESTART IDENTITY CASCADE;
+TRUNCATE transactions, section_inputs, todos, calendar_entries, weeks RESTART IDENTITY CASCADE;
 UPDATE user_profile SET content = '', updated_at = NOW();
 UPDATE finance_profile SET monthly_take_home = 0, fixed_expenses = '[]', updated_at = NOW();
 
@@ -67,10 +67,6 @@ INSERT INTO section_inputs (week_id, section, raw_input) VALUES
   ('aaaaaaaa-0000-0000-0000-000000000002', 'todos', 'Book appointment. Reply to email. Buy a gift.'),
   ('aaaaaaaa-0000-0000-0000-000000000002', 'social', 'Catch up with a friend midweek.'),
   ('aaaaaaaa-0000-0000-0000-000000000002', 'events', 'Team standup Tuesday morning.');
-
--- ─── Nudges — current week ────────────────────────────────────────────────────
-INSERT INTO nudges (week_id, message, category, triggered_at, dismissed) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000002', 'You have not logged a run yet today.', 'health', NOW() - INTERVAL '2 hours', false);
 
 -- ─── Transactions ─────────────────────────────────────────────────────────────
 INSERT INTO transactions (week_id, date, amount, description, raw_description, category, confirmed) VALUES
