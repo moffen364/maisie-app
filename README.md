@@ -2,7 +2,13 @@
 
 A little pink corner of the internet that plans my week and tells me where my money went.
 
-No login screen. No "Team" pricing tier. No onboarding wizard. Just one person's Sunday-night ritual, turned into an app.
+No "Team" pricing tier. No onboarding wizard. Just one person's Sunday-night
+ritual, turned into an app — behind a single password, because it holds real
+calendars and real bank transactions.
+
+**👀 Want a look inside?** There's a [live demo](https://maisie-app-demo.vercel.app)
+with invented data and no login. The AI features are switched off there —
+it's public, and they'd run on my API key.
 
 ---
 
@@ -47,7 +53,13 @@ You'll need a `.env.local` with:
 ```
 DATABASE_URL=      # Neon Postgres connection string
 ANTHROPIC_API_KEY=
+APP_PASSWORD=      # gates the app — pick a long passphrase
+AUTH_SECRET=       # signs the auth cookie: openssl rand -hex 32
 ```
+
+`APP_PASSWORD` and `AUTH_SECRET` are both required. The app **fails closed** —
+without them every route returns 503 rather than falling open, which is rather
+the point.
 
 Then set up the schema once:
 
@@ -65,6 +77,35 @@ npx tsc --noEmit  # type-check without building
 ```
 
 There's no test suite or linter configured — this is a personal project kept deliberately simple, not a product with a team behind it.
+
+## 🔐 Two deployments, one repo
+
+The repo is public; the app holds real data. So it runs twice:
+
+| | Production | Demo |
+|---|---|---|
+| Who gets in | Me, with a password | Anyone |
+| Data | Real, private Neon DB | Invented — a fictional "Sam" |
+| AI features | On | Off, with a note explaining why |
+
+The split is one env var: `NEXT_PUBLIC_DEMO_MODE=true` on the demo only. It
+skips the password (a login wall on a portfolio link defeats the point) and
+turns off anything that calls Claude.
+
+**The separation is two databases, not a `WHERE` clause.** Filtering demo data
+from real data inside one deployment means getting it right on every query
+forever; one miss and a stranger sees my bank statement. The demo simply never
+holds the connection string to the real database.
+
+AI blocking is layered: each AI route checks the flag, *and* the Anthropic
+client itself throws in demo mode — so a route added later that forgets the
+check still can't spend my credits. The demo needs no API key at all.
+
+Demo data lives in [`src/db/seed.demo.sql`](./src/db/seed.demo.sql), written
+from scratch rather than adapted from mine — lightly-edited personal data keeps
+details you don't notice.
+
+---
 
 ## 📚 Want the deeper lore?
 
