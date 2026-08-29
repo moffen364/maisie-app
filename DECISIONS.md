@@ -28,8 +28,26 @@ That switch is now driven entirely by the FAB's "Lists" mini-action, tracked via
 
 ## Authentication
 
-**No auth. Single user only.**
-This is a personal PWA. There is one `user_profile` row in the DB. No login, no sessions, no multi-user support planned.
+**Single shared password, one user. No user accounts.**
+This is a personal PWA — there is still one `user_profile` row and no
+multi-user support planned. But the deployment URL is linked from the public
+GitHub repo, so "no auth at all" meant strangers could read and write real
+finance and profile data. `src/proxy.ts` requires a password cookie on every
+route.
+
+Requires `APP_PASSWORD` and `AUTH_SECRET`. It fails closed — if either is
+unset the app returns 503 rather than serving. Don't "fix" that by letting it
+fall through; an unset password on a public URL is the exact failure it
+prevents.
+
+`/api/cron` is exempt from the password because Vercel's scheduler can't hold
+a cookie — it is guarded by `CRON_SECRET` instead, which must now actually be
+set. It was previously optional, and unset, which left the endpoint open to
+unauthenticated Claude API calls.
+
+Chose a password cookie over Vercel Authentication because this is an
+installed standalone PWA: Vercel's flow bounces to vercel.com to authenticate,
+which breaks out of the standalone window on iOS and re-prompts often.
 
 ---
 
