@@ -5,6 +5,8 @@ import Spinner from '@/components/Spinner';
 import { useModalTransition } from '@/hooks/useModalTransition';
 import CenteredModal from '@/components/CenteredModal';
 import { QUICK_ADD_EVENT } from '@/lib/utils';
+import DemoNotice from './DemoNotice';
+import { IS_DEMO } from '@/lib/demo';
 
 interface Props {
   open: boolean;
@@ -88,6 +90,7 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
             </div>
           ) : (
             <>
+              <DemoNotice className="mb-3" />
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -98,12 +101,13 @@ export default function QuickAddSheet({ open, onClose, targetDate }: Props) {
                     handleSubmit();
                   }
                 }}
-                placeholder="e.g. pick up dry cleaning tomorrow, dentist Thursday 3pm"
-                className="w-full h-24 text-sm resize-none border border-pink-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder-gray-400"
+                disabled={IS_DEMO}
+                placeholder={IS_DEMO ? 'Quick Add is disabled in the demo' : 'e.g. pick up dry cleaning tomorrow, dentist Thursday 3pm'}
+                className="w-full h-24 disabled:bg-gray-50 disabled:text-gray-400 text-sm resize-none border border-pink-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder-gray-400"
               />
               <button
                 onClick={handleSubmit}
-                disabled={!input.trim() || loading}
+                disabled={IS_DEMO || !input.trim() || loading}
                 className="mt-3 w-full h-11 bg-brand text-white text-sm font-semibold rounded-xl disabled:opacity-40 flex items-center justify-center gap-2 hover:bg-brand-dark transition-colors"
               >
                 {loading ? (

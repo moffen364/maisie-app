@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
 import { AI_MODEL_SMART, anthropic, parseClaudeJSON } from '@/lib/models';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 export async function POST(request: NextRequest) {
   try {
+    assertAIEnabled();
     const body = await request.json();
     const { weekStart } = body;
 
@@ -96,6 +98,9 @@ Respond with ONLY valid JSON.`;
 
     return NextResponse.json(reviewData);
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/plan/review]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

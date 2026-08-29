@@ -22,9 +22,22 @@ Requires `.env.local` with:
 ```
 DATABASE_URL=     # Neon Postgres connection string
 ANTHROPIC_API_KEY=
+APP_PASSWORD=     # gates the whole app (see DECISIONS.md → Authentication)
+AUTH_SECRET=      # random 32-byte hex, signs the auth cookie
 ```
 
 Run `psql $DATABASE_URL -f src/db/schema.sql` once to set up the DB (or paste the file into the Neon SQL editor).
+
+## Demo mode
+
+`NEXT_PUBLIC_DEMO_MODE=true` puts the app in public-demo mode (`src/lib/demo.ts`):
+the proxy skips the password, AI routes return 503 with an explanation instead
+of calling Claude, and `DemoNotice` explains it in the UI. Set it only on the
+demo deployment — never in production. Demo data: `src/db/seed.demo.sql`.
+
+When adding a route that calls Claude, call `assertAIEnabled()` at the top and
+let `DemoModeError` through the catch block. The `anthropic` client also throws
+in demo mode as a backstop, but the guard gives a cleaner error.
 
 ## Design decisions
 

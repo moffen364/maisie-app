@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { IS_DEMO } from './lib/demo';
 
 /**
  * Gates the whole app behind a single shared password.
@@ -67,6 +68,11 @@ function safeEqual(a: string, b: string): boolean {
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // The public demo has no password — it holds only fake data, and a login
+  // wall on a portfolio link defeats the point. Its protection is that its
+  // database is disposable and its AI features are off (see src/lib/demo.ts).
+  if (IS_DEMO) return NextResponse.next();
 
   if (isPublicPath(pathname)) return NextResponse.next();
 

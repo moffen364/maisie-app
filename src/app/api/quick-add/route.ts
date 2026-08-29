@@ -3,9 +3,11 @@ import sql, { getOrCreateWeek, getUserProfile } from '@/lib/db';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { getMondayOfWeek, toDateStr } from '@/lib/utils';
 import { LIST_COLOR_ORDER } from '@/lib/types';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 export async function POST(request: NextRequest) {
   try {
+    assertAIEnabled();
     const body = await request.json();
     const { text, targetDate } = body;
 
@@ -197,6 +199,9 @@ Respond with ONLY valid JSON, no markdown.`;
 
     return NextResponse.json({ message: data.message });
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/quick-add]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

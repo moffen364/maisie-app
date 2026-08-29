@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 export async function POST(request: NextRequest) {
   try {
+    assertAIEnabled();
     const body = await request.json();
     const { weekStart, issueText, proposedWeek, calendarEntries, todos } = body;
 
@@ -54,6 +56,9 @@ ${JSON.stringify(todos, null, 2)}`;
 
     return NextResponse.json(updated);
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/plan/apply-suggestion]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

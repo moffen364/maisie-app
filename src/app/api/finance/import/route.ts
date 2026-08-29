@@ -3,9 +3,11 @@ import sql from '@/lib/db';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
 import { financeImportSystemPrompt } from '@/prompts/finance';
 import { ParsedTransaction } from '@/lib/types';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 export async function POST(req: Request) {
   try {
+    assertAIEnabled();
     const { rawText }: { rawText: string } = await req.json();
 
     if (!rawText?.trim()) {
@@ -46,6 +48,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ transactions });
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/finance/import]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

@@ -6,6 +6,8 @@ import { ParsedTransaction, FinanceCategory } from '@/lib/types';
 import { getMondayOfWeek } from '@/lib/utils';
 import Spinner from '@/components/Spinner';
 import TransactionRow from '@/components/TransactionRow';
+import DemoNotice from '@/components/DemoNotice';
+import { IS_DEMO } from '@/lib/demo';
 
 type Stage = 'paste' | 'review';
 
@@ -81,6 +83,7 @@ export default function FinanceImportPage() {
           </svg>
         </button>
         <h1 className="text-xl font-semibold text-gray-900">Import Transactions</h1>
+        <DemoNotice className="mt-3" />
       </div>
 
       {stage === 'paste' ? (
@@ -104,7 +107,7 @@ export default function FinanceImportPage() {
             </button>
             <button
               onClick={handleParse}
-              disabled={!rawText.trim() || parsing}
+              disabled={IS_DEMO || !rawText.trim() || parsing}
               className="flex-1 h-11 rounded-xl text-sm font-semibold bg-brand text-white disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-brand-dark transition-colors"
             >
               {parsing ? (

@@ -7,6 +7,7 @@ import { getMondayOfWeek } from '@/lib/utils';
 import ChatPanel from '@/components/ChatPanel';
 import Spinner from '@/components/Spinner';
 import TransactionRow from '@/components/TransactionRow';
+import DemoNotice from '@/components/DemoNotice';
 
 const TOTAL_STEPS = PLAN_SECTIONS.length + 1; // +1 for finance
 
@@ -96,6 +97,8 @@ export default function PlanPage() {
       <div className="pt-12 px-4 pb-0">
         <h1 className="text-xl font-semibold text-gray-900">Plan your week</h1>
       </div>
+
+      <DemoNotice className="mx-4 mt-3" />
 
       {/* Progress bar */}
       <div className="mx-4 mt-3">

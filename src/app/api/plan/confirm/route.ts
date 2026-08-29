@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql, { getOrCreateWeek, getUserProfile, updateUserProfile } from '@/lib/db';
 import { AI_MODEL, anthropic, parseClaudeJSON } from '@/lib/models';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 interface CalendarEntryInput {
   day: string;
@@ -100,6 +101,7 @@ Respond with ONLY valid JSON.`;
 
 export async function POST(request: NextRequest) {
   try {
+    assertAIEnabled();
     const body = await request.json();
     const { weekStart, calendarEntries: prebuiltEntries, todos: prebuiltTodos, groceryItems: prebuiltGroceryItems } = body;
 
@@ -239,6 +241,9 @@ Return ONLY the new lines to append (not the full profile). If nothing new was l
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/plan/confirm]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

@@ -51,6 +51,40 @@ which breaks out of the standalone window on iOS and re-prompts often.
 
 ---
 
+## Public demo deployment
+
+**Two deployments, two databases — not one app with two logins.**
+The repo is public and its homepage link was pointing at the live app. Rather
+than separating demo and real data by a `WHERE` clause on ~20 routes (one
+missed filter exposes real finance data), the demo is a separate Vercel
+project with its own throwaway Neon database. The demo cannot reach real data
+because it never holds the connection string.
+
+**Demo mode is one env var: `NEXT_PUBLIC_DEMO_MODE=true`.** Set it only on the
+demo deployment. It does three things (`src/lib/demo.ts`):
+- The proxy skips the password — the demo holds only fake data, and a login
+  wall on a portfolio link defeats the point.
+- AI routes return 503 with an explanatory message instead of calling Claude.
+  The demo is public and unauthenticated; live calls would be an open tab on
+  the owner's API spend.
+- `DemoNotice` explains this in the UI *before* the user clicks, and the
+  relevant inputs are disabled.
+
+Enforcement is server-side and layered: each AI route calls `assertAIEnabled()`,
+and the `anthropic` client itself is a Proxy that throws in demo mode, so a
+route that forgets the guard still cannot spend money. The demo needs no
+`ANTHROPIC_API_KEY` at all.
+
+`NEXT_PUBLIC_DEMO_MODE` is deliberately client-visible — the UI needs it to
+explain itself. It is a display flag, not a secret, and it is read from the
+server environment, so a client cannot set it to bypass the password.
+
+Demo data lives in `src/db/seed.demo.sql` — a fictional person, written from
+scratch. Don't seed the demo by editing real data; lightly-edited personal
+data keeps details you don't notice.
+
+---
+
 ## Frontend
 
 **No icon libraries — all SVGs are inline.**

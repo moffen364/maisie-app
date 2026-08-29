@@ -6,6 +6,7 @@ import { mealsPrompt } from '@/prompts/meals';
 import { todosPrompt } from '@/prompts/todos';
 import { socialPrompt } from '@/prompts/social';
 import { eventsPrompt } from '@/prompts/events';
+import { assertAIEnabled, DemoModeError } from '@/lib/demo';
 
 const sectionPrompts: Record<string, string> = {
   exercise: exercisePrompt,
@@ -17,6 +18,7 @@ const sectionPrompts: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
+    assertAIEnabled();
     const body = await request.json();
     const { section, messages, currentInput, userProfile } = body;
 
@@ -75,6 +77,9 @@ ${currentInput || 'Nothing entered yet.'}`;
       { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
     );
   } catch (error) {
+    if (error instanceof DemoModeError) {
+      return Response.json({ error: error.message }, { status: error.status });
+    }
     console.error('[POST /api/plan/chat]', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
