@@ -90,6 +90,9 @@ function PlanIcon({ active }: { active: boolean }) {
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // No nav chrome on the login screen — its links would 401 anyway.
+  if (pathname === '/login') return null;
+
   return (
     <>
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-pink-100 safe-area-pb z-40">
